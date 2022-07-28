@@ -75,7 +75,7 @@ services:
       - "8080:80"
     volumes:
       - "pgadmindata:/var/lib/pgadmin"
-      - "../postgres_servers.json:/pgadmin4/servers.json"
+      - "./postgres_servers.json:/pgadmin4/servers.json"
     restart: unless-stopped
     depends_on: 
       - postgresdb
@@ -86,7 +86,7 @@ services:
       POSTGRES_PASSWORD: admin
     volumes:
       - "postgresdata:/var/lib/postgresql/data"
-      - "../postgres_init_database.sh:/docker-entrypoint-initdb.d/init-database.sh"
+      - "./postgres_init_database.sh:/docker-entrypoint-initdb.d/init-database.sh"
 
   # USUARIOS Microservice : exemplo MySQL
   phpmyadmin:
@@ -115,8 +115,8 @@ services:
       - "3306:3306"
     volumes:
       - mysqldata:/var/lib/mysql
-      - "../mysql_init_database.sql:/docker-entrypoint-initdb.d/init-database.sql"
-      - "../mysql.cnf:/etc/mysql/conf.d/mysql.cnf"
+      - "./mysql_init_database.sql:/docker-entrypoint-initdb.d/init-database.sql"
+      - "./mysql.cnf:/etc/mysql/conf.d/mysql.cnf"
 
   # Reporting Microservice: relatórios usando o Elastic
   elasticsearch:
@@ -129,7 +129,6 @@ services:
       - "ELASTIC_PASSWORD=changeme"
     volumes:
       - esdata:/usr/share/elasticsearch/data
-      - ./files:/usr/share/elasticsearch/files
 
   kibana:
     image: kibana:7.12.1
