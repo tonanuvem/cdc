@@ -46,7 +46,7 @@ services:
   debeziumui:
     image: "debezium/debezium-ui"
     environment:
-      KAFKA_CONNECT_URI: "http://connect:8073"
+      KAFKA_CONNECT_URIS: "http://connect:8073"
     ports:
       - "8074:8080"
     depends_on:
