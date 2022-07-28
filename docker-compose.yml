@@ -118,24 +118,6 @@ services:
       - "../mysql_init_database.sql:/docker-entrypoint-initdb.d/init-database.sql"
       - "../mysql.cnf:/etc/mysql/conf.d/mysql.cnf"
 
-  # Delivery (Logistica) Microservice : exemplo Redis
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    restart: unless-stopped
-    environment:
-    - REDIS_HOSTS=local:redis:6379
-    ports:
-    - "8083:8081"
-    depends_on: 
-      - redis
-
-  redis:
-    image: redis
-    ports:
-      - 6379:6379
-    volumes:
-      - redisdata:/data  
-
   # Reporting Microservice: relatórios usando o Elastic
   elasticsearch:
     image: elasticsearch:7.12.1
@@ -161,7 +143,6 @@ services:
 volumes:
   pgadmindata:
   postgresdata:
-  mongodata:
   mysqldata:
   redisdata:
   esdata:
