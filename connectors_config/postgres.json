@@ -1,0 +1,13 @@
+{
+  "name": "produtos-postgres-connector",  
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector", 
+    "database.hostname": "postgresdb", 
+    "database.port": "5432", 
+    "database.user": "postgres", 
+    "database.password": "admin", 
+    "database.dbname" : "postgres", 
+    "database.server.name": "postgresdb", 
+    "table.include.list": "public.products" 
+  }
+}
