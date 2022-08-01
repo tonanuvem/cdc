@@ -3,6 +3,8 @@ Change Data Capture &amp; Event-driven &amp; Big Data Event Processing
 
 Links:
 
+> https://developer.confluent.io/learn-kafka/data-pipelines/intro/?_ga=2.47046434.483257499.1659064294-44664323.1659064294
+<br> <br>
 > https://www.infoq.com/presentations/data-streaming-kafka-debezium/
 <br> <br>
 > https://discuss.elastic.co/t/is-it-possible-to-return-only-the-most-recent-of-each-document/172011
