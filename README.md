@@ -3,7 +3,9 @@ Change Data Capture &amp; Event-driven &amp; Big Data Event Processing
 
 Links:
 
-> https://developer.confluent.io/learn-kafka/data-pipelines/intro/?_ga=2.47046434.483257499.1659064294-44664323.1659064294
+> https://developer.confluent.io/learn-kafka/data-pipelines/intro/
+<br> <br>
+> https://developer.confluent.io/learn-kafka/kafka-connect/intro/
 <br> <br>
 > https://www.infoq.com/presentations/data-streaming-kafka-debezium/
 <br> <br>
