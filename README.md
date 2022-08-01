@@ -14,3 +14,5 @@ Links:
 > https://jolt-demo.appspot.com/#inception
 <br> <br>
 > https://community.cloudera.com/t5/Community-Articles/Jolt-quick-reference-for-Nifi-Jolt-Processors/ta-p/244350
+<br> <br>
+> https://medium.com/rescuepoint/lab-twitter-nifi-kafka-druid-superset-parte-2-pr%C3%A1tica-da7cd33b293c
