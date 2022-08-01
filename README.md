@@ -11,6 +11,8 @@ Links:
 <br> <br>
 > https://discuss.elastic.co/t/is-it-possible-to-return-only-the-most-recent-of-each-document/172011
 <br> <br>
+> https://rmoff.net/2019/10/07/kafka-connect-and-elasticsearch/
+<br> <br>
 > https://superset.apache.org/docs/databases/elasticsearch/
 <br> <br>
 > https://github.com/debezium/debezium-ui/blob/main/docker-compose.yml
