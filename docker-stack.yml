@@ -1,0 +1,175 @@
+version: "3.4"
+
+services:
+
+
+  # Automação do Fluxo de dados
+  nifi:
+    image: "apache/nifi"
+    environment:
+      NIFI_WEB_HTTP_PORT: 8080   
+    ports: 
+      - "8090:8080"
+      - "8010:8010"
+    volumes:
+      - ./templates/:/opt/nifi/nifi-current/conf/templates/
+    networks:
+      - cdc
+    restart: always 
+
+  zookeeper:
+    image: "confluentinc/cp-zookeeper"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181    
+    ports: 
+      - "2181:2181"
+    networks:
+      - cdc
+    restart: always      
+
+  kafka:
+    image: "confluentinc/cp-kafka"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_ADVERTISED_HOST_NAME: "kafka"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_CLEANER_DELETE_RETENTION_MS: 5000
+      KAFKA_BROKER_ID: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1      
+    ports: 
+      - "9092:9092"
+    networks:
+      - cdc
+    depends_on:
+      - zookeeper
+    restart: always      
+  
+  # Ferramenta CDC (Change Data Capture)
+  connect:
+    image: "debezium/connect"
+    environment:
+      GROUP_ID: 1
+      REST_ADVERTISED_HOST_NAME: "connect"
+      BOOTSTRAP_SERVERS: "kafka:9092"
+      ZOOKEEPER_CONNECT: "zookeeper:2181"
+      CONFIG_STORAGE_TOPIC: "cdc_connect_configs"
+      OFFSET_STORAGE_TOPIC: "cdc_connect_offsets" 
+      STATUS_STORAGE_TOPIC: "cdc_connect_statuses"
+    ports:
+      - "8073:8083"
+    networks:
+      - cdc
+    depends_on:
+      - zookeeper
+      - kafka
+
+  # ferramenta visualização Kafka
+  kowl:
+    image: quay.io/cloudhut/kowl:v1.5.0
+    restart: on-failure
+    hostname: kowl
+    ports:
+    - "8070:8080"
+    volumes:
+    - ./kowl_config.yaml:/etc/kowl/config.yaml
+    entrypoint: ./kowl --config.filepath=/etc/kowl/config.yaml
+    networks:
+      - cdc
+    depends_on:
+      - kafka
+
+  # PRODUTOS Microservice : exemplo Postgres
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    volumes:
+      - "pgadmindata:/var/lib/pgadmin"
+      - "./postgres_servers.json:/pgadmin4/servers.json"
+    restart: unless-stopped
+    networks:
+      - cdc
+    depends_on: 
+      - postgresdb
+      
+  postgresdb:
+    image: debezium/postgres:13-alpine
+    environment:
+      POSTGRES_PASSWORD: admin
+    networks:
+      - cdc
+    volumes:
+      - "postgresdata:/var/lib/postgresql/data"
+      - "./postgres_init_database.sh:/docker-entrypoint-initdb.d/init-database.sh"
+
+  # USUARIOS Microservice : exemplo MySQL
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: mysqldb
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+      PMA_USER: admin
+      PMA_PASSWORD: admin
+    restart: always
+    ports:
+      - 8082:80
+    networks:
+      - cdc
+    restart: unless-stopped
+    depends_on: 
+      - mysqldb
+    
+  mysqldb:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: usuarios
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+    ports:
+      - "3306:3306"
+    networks:
+      - cdc
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - "./mysql_init_database.sql:/docker-entrypoint-initdb.d/init-database.sql"
+      - "./mysql.cnf:/etc/mysql/conf.d/mysql.cnf"
+
+  # Reporting Microservice: relatórios usando o Elastic
+  elasticsearch:
+    image: elasticsearch:7.12.1
+    container_name: elasticsearch
+    environment:
+      - "http.host=0.0.0.0"
+      - "transport.host=127.0.0.1"
+      - "ES_JAVA_OPTS=-Xmx256m -Xms256m"
+      - "ELASTIC_PASSWORD=changeme"
+    networks:
+      - cdc
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  kibana:
+    image: kibana:7.12.1
+    container_name: kibana
+    ports:
+      - 5601:5601
+    networks:
+      - cdc
+    depends_on:
+      - elasticsearch
+
+volumes:
+  pgadmindata:
+  postgresdata:
+  mysqldata:
+
+networks:
+  cdc:
+    driver: overlay
+
