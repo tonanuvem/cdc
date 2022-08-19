@@ -18,6 +18,7 @@ while [ "$(docker stack ps --no-trunc cdc 2>&1 | grep "Running         Running" 
   printf "."
   sleep 1
 done
+echo ""
 docker service ls
 echo ""
 echo "Config OK"
