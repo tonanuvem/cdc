@@ -1,4 +1,4 @@
 FROM debezium/postgres:13-alpine
 USER postgres
 COPY ./postgres_init_database.sh /docker-entrypoint-initdb.d/init-database.sh
-RUN chmod 555 postgres_init_database.sh
+RUN chmod 555 /docker-entrypoint-initdb.d/postgres_init_database.sh
