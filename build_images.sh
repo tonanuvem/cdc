@@ -1,1 +1,1 @@
-docker build -t tonanuvem/kowl:conf -f Dockerfile.tonanuvem.kowl ./Dockerfile
+docker build -t tonanuvem/kowl:conf -f ./Dockerfile/Dockerfile.tonanuvem.kowl .
