@@ -13,6 +13,8 @@ services:
       placement:
         constraints:
           - node.role == manager
+    networks:
+      - cdc
 
   # Automação do Fluxo de dados
   nifi:
@@ -147,7 +149,6 @@ services:
   # Reporting Microservice: relatórios usando o Elastic
   elasticsearch:
     image: elasticsearch:7.12.1
-    container_name: elasticsearch
     environment:
       - "http.host=0.0.0.0"
       - "transport.host=127.0.0.1"
@@ -160,7 +161,6 @@ services:
 
   kibana:
     image: kibana:7.12.1
-    container_name: kibana
     ports:
       - 5601:5601
     networks:
@@ -172,6 +172,7 @@ volumes:
   pgadmindata:
   postgresdata:
   mysqldata:
+  esdata:
 
 networks:
   cdc:
