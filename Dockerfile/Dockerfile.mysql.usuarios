@@ -1,0 +1,4 @@
+FROM mysql:5.7
+
+COPY ./mysql_init_database.sql /docker-entrypoint-initdb.d/init-database.sql
+COPY ./mysql.cnf /etc/mysql/conf.d/mysql.cnf
