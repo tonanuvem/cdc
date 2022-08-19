@@ -18,14 +18,15 @@ services:
 
   # Automação do Fluxo de dados
   nifi:
-    image: "apache/nifi"
+    #image: "apache/nifi"
+    image: tonanuvem/nifi:cdc
     environment:
       NIFI_WEB_HTTP_PORT: 8080   
     ports: 
       - "8090:8080"
       - "8010:8010"
-    volumes:
-      - ./templates/:/opt/nifi/nifi-current/conf/templates/
+    #volumes:
+    #  - ./templates/:/opt/nifi/nifi-current/conf/templates/
     networks:
       - cdc
 
@@ -78,11 +79,11 @@ services:
   kowl:
     #image: quay.io/cloudhut/kowl:v1.5.0
     image: tonanuvem/kowl:conf
-    hostname: kowl
+    #hostname: kowl
     ports:
     - "8070:8080"
-    volumes:
-    - ./kowl_config.yaml:/etc/kowl/config.yaml
+    #volumes:
+    #- ./kowl_config.yaml:/etc/kowl/config.yaml
     entrypoint: ./kowl --config.filepath=/etc/kowl/config.yaml
     networks:
       - cdc
@@ -91,7 +92,8 @@ services:
 
   # PRODUTOS Microservice : exemplo Postgres
   pgadmin:
-    image: dpage/pgadmin4
+    #image: dpage/pgadmin4
+    image: tonanuvem/pgadmin:cdc
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
@@ -99,21 +101,22 @@ services:
       - "8080:80"
     volumes:
       - "pgadmindata:/var/lib/pgadmin"
-      - "./postgres_servers.json:/pgadmin4/servers.json"
+    #  - "./postgres_servers.json:/pgadmin4/servers.json"
     networks:
       - cdc
     depends_on: 
       - postgresdb
       
   postgresdb:
-    image: debezium/postgres:13-alpine
+    #image: debezium/postgres:13-alpine
+    image: tonanuvem/postgres:produtos
     environment:
       POSTGRES_PASSWORD: admin
     networks:
       - cdc
     volumes:
       - "postgresdata:/var/lib/postgresql/data"
-      - "./postgres_init_database.sh:/docker-entrypoint-initdb.d/init-database.sh"
+      #- "./postgres_init_database.sh:/docker-entrypoint-initdb.d/init-database.sh"
 
   # USUARIOS Microservice : exemplo MySQL
   phpmyadmin:
@@ -132,7 +135,8 @@ services:
       - mysqldb
     
   mysqldb:
-    image: mysql:5.7
+    #image: mysql:5.7
+    image: tonanuvem/mysql:usuarios
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: usuarios
@@ -144,8 +148,8 @@ services:
       - cdc
     volumes:
       - mysqldata:/var/lib/mysql
-      - "./mysql_init_database.sql:/docker-entrypoint-initdb.d/init-database.sql"
-      - "./mysql.cnf:/etc/mysql/conf.d/mysql.cnf"
+      #- "./mysql_init_database.sql:/docker-entrypoint-initdb.d/init-database.sql"
+      #- "./mysql.cnf:/etc/mysql/conf.d/mysql.cnf"
 
   # Reporting Microservice: relatórios usando o Elastic
   elasticsearch:
