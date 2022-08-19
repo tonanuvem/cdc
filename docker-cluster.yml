@@ -1,3 +1,5 @@
+# testando configs do kafka e zookeeper
+
 version: "3.4"
 
 services:
