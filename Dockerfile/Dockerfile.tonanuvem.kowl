@@ -1,0 +1,3 @@
+FROM quay.io/cloudhut/kowl:v1.5.0
+
+COPY ./kowl_config.yaml /etc/kowl/config.yaml
