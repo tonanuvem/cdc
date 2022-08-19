@@ -5,3 +5,6 @@ docker build -t tonanuvem/mysql:usuarios -f ./Dockerfile/Dockerfile.mysql.usuari
 docker build -t tonanuvem/postgres:produtos -f ./Dockerfile/Dockerfile.postgres.produtos .
 docker build -t tonanuvem/nifi:cdc -f ./Dockerfile/Dockerfile.nifi.cdc .
 docker build -t tonanuvem/pgadmin:cdc -f ./Dockerfile/Dockerfile.pgadmin.cdc .
+
+# Publicar as 5 imagens:
+# docker push tonanuvem/kowl:conf && docker push tonanuvem/mysql:usuarios && docker push tonanuvem/postgres:produtos && docker push tonanuvem/nifi:cdc && docker push tonanuvem/pgadmin:cdc
