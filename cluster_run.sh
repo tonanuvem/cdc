@@ -14,7 +14,7 @@ echo ""
 sh config_cdc.sh
 echo ""
 echo "Aguardando todos os 12 serviços entrarem em estado Running."
-while [ "$(docker stack ps --no-trunc cdc 2>&1 | grep "Running" | wc -l)" != "12" ]; do
+while [ "$(docker stack ps --no-trunc cdc 2>&1 | grep "Running         Running" | wc -l)" != "12" ]; do
   printf "."
   sleep 1
 done
