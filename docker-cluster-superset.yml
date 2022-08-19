@@ -1,5 +1,3 @@
-# testando configs do kafka e zookeeper
-
 version: "3.4"
 
 services:
@@ -38,43 +36,30 @@ services:
       - cdc
 
   zookeeper:
-    image: zookeeper:3.4.9
-    #hostname: zookeeper
-    ports:
-      - "2181:2181"
+    image: "confluentinc/cp-zookeeper"
     environment:
-      ZOO_MY_ID: 1
-      ZOO_PORT: 2181
-      ZOO_SERVERS: server.1=zoo1:2888:3888
-    #volumes:
-    #  - ./zk-single-kafka-single/zoo1/data:/data
-    #  - ./zk-single-kafka-single/zoo1/datalog:/datalog
+      ZOOKEEPER_CLIENT_PORT: 2181    
+    ports: 
+      - "2181:2181"
     networks:
       - cdc  
 
   kafka:
-    image: confluentinc/cp-kafka:5.5.10
-    hostname: kafka
-    ports:
-      - "9092:9092"
+    image: "confluentinc/cp-kafka"
     environment:
-      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:9092,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092
-      KAFKA_ADVERTISED_HOST_NAME: "kafka"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_BROKER_ID: 1
-      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_MIN_INSYNC_REPLICAS: 1   
       KAFKA_ADVERTISED_HOST_NAME: "kafka"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_LOG_CLEANER_DELETE_RETENTION_MS: 5000
-    #volumes:
-    #  - ./zk-single-kafka-single/kafka1/data:/var/lib/kafka/data
-    depends_on:
-      - zookeeper
+      KAFKA_BROKER_ID: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1      
+    ports: 
+      - "9092:9092"
     networks:
-      - cdc   
+      - cdc
+    depends_on:
+      - zookeeper    
   
   # Ferramenta CDC (Change Data Capture)
   connect:
@@ -193,11 +178,22 @@ services:
     depends_on:
       - elasticsearch
 
+  superset:
+    image: apache/superset
+    container_name: superset_app
+    ports:
+      - 8088:8088
+    depends_on:
+      - elasticsearch
+    volumes:
+      - superset_home:/app/superset_home
+
 volumes:
   pgadmindata:
   postgresdata:
   mysqldata:
   esdata:
+  superset_home:
 
 networks:
   cdc:
