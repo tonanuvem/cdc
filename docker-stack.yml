@@ -76,7 +76,8 @@ services:
 
   # ferramenta visualização Kafka
   kowl:
-    image: quay.io/cloudhut/kowl:v1.5.0
+    #image: quay.io/cloudhut/kowl:v1.5.0
+    image: tonanuvem/kowl:conf
     hostname: kowl
     ports:
     - "8070:8080"
