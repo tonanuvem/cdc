@@ -1,0 +1,202 @@
+version: "3.4"
+
+services:
+
+  # Visualização do Cluster
+  visualizador:
+    image: dockersamples/visualizer
+    volumes:
+    - "/var/run/docker.sock:/var/run/docker.sock"
+    ports:
+    - 8060:8080
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - cdc
+
+  # Automação do Fluxo de dados (https://stackoverflow.com/questions/62391633/exposing-nifi-ui-when-running-a-cluster-in-docker-swarm)
+  nifi:
+    #image: "apache/nifi"
+    image: tonanuvem/nifi:cdc
+    environment:
+      NIFI_WEB_HTTP_PORT: "8080"
+      NIFI_WEB_HTTP_HOST: "0.0.0.0"
+      #NIFI_CLUSTER_IS_NODE: "true"
+      #NIFI_CLUSTER_NODE_PROTOCOL_PORT: "8082"
+      #NIFI_ZK_CONNECT_STRING: "zookeeper:2181"
+      #NIFI_ELECTION_MAX_WAIT: "1 min"
+    ports: 
+      - "8090:8080"
+      - "8010:8010"
+    #volumes:
+    #  - ./templates/:/opt/nifi/nifi-current/conf/templates/
+    networks:
+      - cdc
+
+  zookeeper:
+    image: zookeeper:3.4.9
+    #hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_PORT: 2181
+      ZOO_SERVERS: server.1=zoo1:2888:3888
+    #volumes:
+    #  - ./zk-single-kafka-single/zoo1/data:/data
+    #  - ./zk-single-kafka-single/zoo1/datalog:/datalog
+    networks:
+      - cdc  
+
+  kafka:
+    image: confluentinc/cp-kafka:5.5.10
+    hostname: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:9092,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092
+      KAFKA_ADVERTISED_HOST_NAME: "kafka"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1   
+      KAFKA_ADVERTISED_HOST_NAME: "kafka"
+      KAFKA_LOG_CLEANER_DELETE_RETENTION_MS: 5000
+    #volumes:
+    #  - ./zk-single-kafka-single/kafka1/data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+    networks:
+      - cdc   
+  
+  # Ferramenta CDC (Change Data Capture)
+  connect:
+    image: "debezium/connect"
+    environment:
+      GROUP_ID: 1
+      REST_ADVERTISED_HOST_NAME: "connect"
+      BOOTSTRAP_SERVERS: "kafka:9092"
+      ZOOKEEPER_CONNECT: "zookeeper:2181"
+      CONFIG_STORAGE_TOPIC: "cdc_connect_configs"
+      OFFSET_STORAGE_TOPIC: "cdc_connect_offsets" 
+      STATUS_STORAGE_TOPIC: "cdc_connect_statuses"
+    ports:
+      - "8073:8083"
+    networks:
+      - cdc
+    depends_on:
+      - zookeeper
+      - kafka
+
+  # ferramenta visualização Kafka
+  kowl:
+    #image: quay.io/cloudhut/kowl:v1.5.0
+    image: tonanuvem/kowl:conf
+    #hostname: kowl
+    ports:
+    - "8070:8080"
+    #volumes:
+    #- ./kowl_config.yaml:/etc/kowl/config.yaml
+    entrypoint: ./kowl --config.filepath=/etc/kowl/config.yaml
+    networks:
+      - cdc
+    depends_on:
+      - kafka
+
+  # PRODUTOS Microservice : exemplo Postgres
+  pgadmin:
+    #image: dpage/pgadmin4
+    image: tonanuvem/pgadmin:cdc
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    volumes:
+      - "pgadmindata:/var/lib/pgadmin"
+    #  - "./postgres_servers.json:/pgadmin4/servers.json"
+    networks:
+      - cdc
+    depends_on: 
+      - postgresdb
+      
+  postgresdb:
+    #image: debezium/postgres:13-alpine
+    image: tonanuvem/postgres:produtos
+    environment:
+      POSTGRES_PASSWORD: admin
+    networks:
+      - cdc
+    volumes:
+      - "postgresdata:/var/lib/postgresql/data"
+      #- "./postgres_init_database.sh:/docker-entrypoint-initdb.d/init-database.sh"
+
+  # USUARIOS Microservice : exemplo MySQL
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: mysqldb
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+      PMA_USER: admin
+      PMA_PASSWORD: admin
+    ports:
+      - 8082:80
+    networks:
+      - cdc
+    depends_on: 
+      - mysqldb
+    
+  mysqldb:
+    #image: mysql:5.7
+    image: tonanuvem/mysql:usuarios
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: usuarios
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+    ports:
+      - "3306:3306"
+    networks:
+      - cdc
+    volumes:
+      - mysqldata:/var/lib/mysql
+      #- "./mysql_init_database.sql:/docker-entrypoint-initdb.d/init-database.sql"
+      #- "./mysql.cnf:/etc/mysql/conf.d/mysql.cnf"
+
+  # Reporting Microservice: relatórios usando o Elastic
+  elasticsearch:
+    image: elasticsearch:7.12.1
+    environment:
+      - "http.host=0.0.0.0"
+      - "transport.host=127.0.0.1"
+      - "ES_JAVA_OPTS=-Xmx256m -Xms256m"
+      - "ELASTIC_PASSWORD=changeme"
+    networks:
+      - cdc
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  kibana:
+    image: kibana:7.12.1
+    ports:
+      - 5601:5601
+    networks:
+      - cdc
+    depends_on:
+      - elasticsearch
+
+volumes:
+  pgadmindata:
+  postgresdata:
+  mysqldata:
+  esdata:
+
+networks:
+  cdc:
+    driver: overlay
