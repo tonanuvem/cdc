@@ -4,8 +4,7 @@ echo ""
 echo "Aguardando os serviços entrarem em estado Running."
 
 while [ "$(docker stack ps cdc | grep Running | grep Running | wc -l)" != "12" ]; do
-  printf "."
-  sleep 1
+  printf "." && sleep 1
 done
 
 echo ""
