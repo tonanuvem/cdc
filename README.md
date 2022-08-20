@@ -10,7 +10,7 @@ URLs:
 - PostGres UI             : http://$IP:8080 ( login = admin@admin.com / senha = admin )
 - MySQL UI                : http://$IP:8082 ( login = admin / senha = admin )
 <br><br>
-echo " - NIFI                    : http://$IP:8090/nifi
+- NIFI                    : http://$IP:8090/nifi
 - Kibana (Elastic search) : http://$IP:5601
 
 Links:
