@@ -7,10 +7,10 @@ docker stack deploy -c docker-stack.yml cdc
 echo ""
 echo "Aguardando os serviços entrarem em estado Running."
 
-while [ "$(docker stack ps cdc | grep cdc_connect | grep Running | grep Running | wc -l)" != "1" ]; do
-  printf "."
-  sleep 1
-done
+#while [ "$(docker stack ps cdc | grep cdc_connect | grep Running | grep Running | wc -l)" != "1" ]; do
+#  printf "."
+#  sleep 1
+#done
 
 echo ""
 sh config_cdc.sh
