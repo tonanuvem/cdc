@@ -7,6 +7,9 @@ while [ "$(docker stack ps --no-trunc cdc 2>&1 | grep "Running         Running" 
   sleep 1
 done
 echo ""
+docker service ls
+echo ""
+
 #echo "Aguardando a configuração do Debezium CDC (Change Data Capture)."
 #while [ "$(docker service logs cdc_connect 2>&1 | grep "Finished starting connectors and tasks" | wc -l)" != "1" ]; do
 #  printf "."
@@ -15,8 +18,7 @@ echo ""
 echo ""
 sh config_cdc.sh
 echo ""
-docker service ls
-echo ""
+
 echo "Config OK"
 IP=$(curl -s checkip.amazonaws.com)
 echo ""
