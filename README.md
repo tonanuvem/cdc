@@ -1,6 +1,18 @@
 # cdc
 Change Data Capture &amp; Event-driven &amp; Big Data Event Processing
 
+URLs:
+
+- VISUALIZADOR            : http://$IP:8060
+<br><br>
+- KAFKA UI                : http://$IP:8070
+<br><br>
+- PostGres UI             : http://$IP:8080 ( login = admin@admin.com / senha = admin )
+- MySQL UI                : http://$IP:8082 ( login = admin / senha = admin )
+<br><br>
+echo " - NIFI                    : http://$IP:8090/nifi
+- Kibana (Elastic search) : http://$IP:5601
+
 Links:
 
 > https://developer.confluent.io/learn-kafka/data-pipelines/intro/
