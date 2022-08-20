@@ -4,18 +4,14 @@ chmod 755 postgres_init_database.sh
 
 docker stack deploy -c docker-stack.yml cdc
 
-#echo ""
-#echo "Aguardando a configuração do Debezium CDC (Change Data Capture)."
-#while [ "$(docker service logs cdc_connect 2>&1 | grep "Finished starting connectors and tasks" | wc -l)" != "1" ]; do
-#  printf "."
-#  sleep 1
-#done
 echo ""
 echo "Aguardando todos os 12 serviços entrarem em estado Running."
-while [ "$(docker stack ps --no-trunc cdc 2>&1 | grep 'Running         Running' | wc -l)" != "12" ]; do
+
+while [ "$(docker stack ps --no-trunc cdc 2>&1 | grep \'Running         Running\' | wc -l)" != "12" ]; do
   printf "."
   sleep 1
 done
+
 echo ""
 sh config_cdc.sh
 echo ""
