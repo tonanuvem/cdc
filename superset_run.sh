@@ -32,6 +32,8 @@ docker exec $(docker ps -q -f name=cdc_superset) superset db upgrade
 # docker exec -it  cdc_superset superset load_examples
 # Setup roles
 docker exec $(docker ps -q -f name=cdc_superset) superset init
+# Instalar conector com Elasticsearch
+#docker exec $(docker ps -q -f name=cdc_superset) pip install elasticsearch-dbapi
 #echo "Loading Dashboard:"
 #docker exec -it  cdc_superset superset import-dashboards -p /app/superset_home/superset/dashboard_ETL.zip
 
