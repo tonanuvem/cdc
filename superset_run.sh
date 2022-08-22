@@ -19,18 +19,19 @@ echo ""
 echo "Configurando o SuperSet"
 echo ""
 # Setup your local admin account
-docker exec -it cdc_superset superset fab create-admin \
+docker exec $(docker ps -q -f name=cdc_superset) \
+            superset fab create-admin \
               --username admin \
               --firstname Superset \
               --lastname Admin \
               --email admin@admin.com \
               --password admin
 # Migrate local DB to latest
-docker exec -it  cdc_superset superset db upgrade
+docker exec $(docker ps -q -f name=cdc_superset) superset db upgrade
 #Load Examples
 # docker exec -it  cdc_superset superset load_examples
 # Setup roles
-docker exec -it  cdc_superset superset init
+docker exec $(docker ps -q -f name=cdc_superset) superset init
 #echo "Loading Dashboard:"
 #docker exec -it  cdc_superset superset import-dashboards -p /app/superset_home/superset/dashboard_ETL.zip
 
