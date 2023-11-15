@@ -16,7 +16,7 @@ services:
     restart: always 
 
   zookeeper:
-    image: "confluentinc/cp-zookeeper"
+    image: "confluentinc/cp-zookeeper:5.4.9"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181    
     ports: 
@@ -24,7 +24,7 @@ services:
     restart: always      
 
   kafka:
-    image: "confluentinc/cp-kafka"
+    image: "confluentinc/cp-kafka:5.4.9"
     environment:
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_ADVERTISED_HOST_NAME: "kafka"
@@ -41,7 +41,7 @@ services:
   
   # Ferramenta CDC (Change Data Capture)
   connect:
-    image: "debezium/connect"
+    image: "debezium/connect:1.9"
     environment:
       GROUP_ID: 1
       REST_ADVERTISED_HOST_NAME: "connect"
@@ -80,7 +80,8 @@ services:
 
   # PRODUTOS Microservice : exemplo Postgres
   pgadmin:
-    image: dpage/pgadmin4
+    #image: dpage/pgadmin4
+    image: tonanuvem/pgadmin:cdc
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
@@ -88,18 +89,19 @@ services:
       - "8080:80"
     volumes:
       - "pgadmindata:/var/lib/pgadmin"
-      - "./postgres_servers.json:/pgadmin4/servers.json"
+    #  - "./postgres_servers.json:/pgadmin4/servers.json"
     restart: unless-stopped
     depends_on: 
       - postgresdb
       
   postgresdb:
-    image: debezium/postgres:13-alpine
+    #image: debezium/postgres:13-alpine
+    image: tonanuvem/postgres:produtos
     environment:
       POSTGRES_PASSWORD: admin
     volumes:
       - "postgresdata:/var/lib/postgresql/data"
-      - "./postgres_init_database.sh:/docker-entrypoint-initdb.d/init-database.sh"
+      #- "./postgres_init_database.sh:/docker-entrypoint-initdb.d/init-database.sh"
 
   # USUARIOS Microservice : exemplo MySQL
   phpmyadmin:
@@ -118,7 +120,8 @@ services:
       - mysqldb
     
   mysqldb:
-    image: mysql:5.7
+    #image: mysql:5.7
+    image: tonanuvem/mysql:usuarios
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: usuarios
@@ -128,8 +131,8 @@ services:
       - "3306:3306"
     volumes:
       - mysqldata:/var/lib/mysql
-      - "./mysql_init_database.sql:/docker-entrypoint-initdb.d/init-database.sql"
-      - "./mysql.cnf:/etc/mysql/conf.d/mysql.cnf"
+      #- "./mysql_init_database.sql:/docker-entrypoint-initdb.d/init-database.sql"
+      #- "./mysql.cnf:/etc/mysql/conf.d/mysql.cnf"
 
   # Reporting Microservice: relatórios usando o Elastic
   elasticsearch:
