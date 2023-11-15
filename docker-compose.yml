@@ -5,14 +5,16 @@ services:
 
   # Automação do Fluxo de dados
   nifi:
-    image: "apache/nifi"
+    #image: "apache/nifi"
+    image: tonanuvem/nifi:cdc
     environment:
-      NIFI_WEB_HTTP_PORT: 8080   
+      NIFI_WEB_HTTP_PORT: 8080
+      NIFI_WEB_HTTP_HOST: "0.0.0.0"
     ports: 
       - "8090:8080"
       - "8010:8010"
-    volumes:
-      - ./templates/:/opt/nifi/nifi-current/conf/templates/
+    #volumes:
+    #  - ./templates/:/opt/nifi/nifi-current/conf/templates/
     restart: always 
 
   zookeeper:
