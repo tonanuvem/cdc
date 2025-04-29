@@ -10,10 +10,10 @@ echo "Configurando CDC para Postgres:"
 curl -s -X POST http://localhost:8073/connectors \
   -H "accept: */*" -H "Content-Type: application/json" \
   -d @connectors_config/postgres.json \
-  | python -mjson.tool
+  | python3 -mjson.tool
 
 echo "Configurando CDC para MySQL"
 curl -s -X POST http://localhost:8073/connectors \
   -H "accept: */*" -H "Content-Type: application/json" \
   -d @connectors_config/mysql.json \
-  | python -mjson.tool
+  | python3 -mjson.tool
