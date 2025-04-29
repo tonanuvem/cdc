@@ -101,8 +101,11 @@ services:
     image: tonanuvem/postgres:produtos
     environment:
       POSTGRES_PASSWORD: admin
+      # "Username": "postgres", "Password": "admin", "Host": "postgresdb"
     volumes:
       - "postgresdata:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
       #- "./postgres_init_database.sh:/docker-entrypoint-initdb.d/init-database.sh"
 
   # USUARIOS Microservice : exemplo MySQL
