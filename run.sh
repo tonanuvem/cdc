@@ -17,6 +17,8 @@ IP=$(curl -s checkip.amazonaws.com)
 echo ""
 echo "URLs do projeto:"
 echo ""
+echo " - DEBEZIUM UI             : http://$IP:8074"
+echo ""
 echo " - KAFKA UI                : http://$IP:8070"
 echo ""
 echo " - PostGres UI             : http://$IP:30080 ( login = admin@admin.com / senha = admin )" 
