@@ -24,10 +24,10 @@ docker-compose -f docker-compose-airflow.yaml up -d airflow-init
 docker-compose -f docker-compose-airflow.yaml up -d
 
 echo "Aguardando TOKEN (geralmente 1 min)"
-while [ "$(docker logs cdc-jupyter-1 2>&1 | grep token | grep 127. | grep NotebookApp | wc -l)" != "1" ]; do
-  printf "."
-  sleep 1
-done
+#while [ "$(docker logs cdc-jupyter-1 2>&1 | grep token | grep 127. | grep NotebookApp | wc -l)" != "1" ]; do
+#  printf "."
+#  sleep 1
+#done
 echo "Token Pronto."
 TOKEN=$(docker logs cdc-jupyter-1 2>&1 | grep token | grep 127. | grep NotebookApp | sed -n 's/.*?token=\([a-f0-9]*\).*/\1/p')
 echo ""
