@@ -43,5 +43,5 @@ IP=$(curl -s checkip.amazonaws.com)
 echo ""
 echo "URLs do projeto:"
 echo ""
-# echo " - SUPERSET UI        : $IP:8088"
+echo " - SUPERSET UI        : $IP:8088"
 echo ""
