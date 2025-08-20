@@ -25,7 +25,7 @@ echo "URLs do projeto:"
 echo ""
 echo " - AIRFLOW                       : http://$IP:8060      com username/password: airflow"
 echo ""
-echo " - JUPYTER PARA EDITAR DAGS      : http://$IP:8880      senha: fiap"
+echo " - JUPYTER PARA EDITAR DAGS      : http://$IP:8880      senha: admin"
 echo ""
 echo ""
 
