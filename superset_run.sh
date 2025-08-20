@@ -31,6 +31,10 @@ docker exec -it superset_app superset db upgrade
 #Load Examples
 # docker exec -it superset_app superset load_examples
 
+
+# Instalar o driver Elasticsearch DBAPI
+docker exec -it superset_app pip install elasticsearch-dbapi
+
 # Setup roles
 
 docker exec -it superset_app superset init
