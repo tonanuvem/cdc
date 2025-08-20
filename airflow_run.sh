@@ -19,6 +19,13 @@ docker-compose -f docker-compose-airflow.yaml up -d airflow-init
 docker-compose -f docker-compose-airflow.yaml up -d
 
 
-IP=$(curl checkip.amazonaws.com)
+IP=$(curl -s checkip.amazonaws.com)
+echo ""
+echo "URLs do projeto:"
+echo ""
+echo " - AIRFLOW                       : http://$IP:8060      com username/password: airflow"
+echo ""
+echo " - JUPYTER PARA EDITAR DAGS      : http://$IP:8880      senha: fiap"
+echo ""
+echo ""
 
-echo "Acessar $IP:8080 com username/password: airflow "
