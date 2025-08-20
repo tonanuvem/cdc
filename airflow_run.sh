@@ -1,9 +1,11 @@
 # Se faltar memoria, poderia dar um Stop : nifi e elasticsearch
 
+# https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
+
 # Download the docker-compose.yaml file
-wget  -O docker-compose-airflow.yaml 'https://airflow.apache.org/docs/apache-airflow/stable/docker-compose.yaml'
-wget 'https://airflow.apache.org/docs/apache-airflow/2.3.3/airflow.sh'
-chmod +x airflow.sh
+# wget  -O docker-compose-airflow.yaml 'https://airflow.apache.org/docs/apache-airflow/stable/docker-compose.yaml'
+# curl -LfO 'https://airflow.apache.org/docs/apache-airflow/3.0.4/airflow.sh'
+# chmod +x airflow.sh
 
 # Make expected directories and set an expected environment variable
 # mkdir -p ./dags ./logs ./plugins ./config
