@@ -77,6 +77,23 @@ services:
     depends_on:
       - kafka
 
+  # outra opcao de ferramenta para visualização Kafka
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8888:8080
+    depends_on:
+      - kafka
+      - connect
+    environment:
+      KAFKA_CLUSTERS_0_NAME: localkafka
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://kafka:9092
+      #KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: connect
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://connect:8083
+      DYNAMIC_CONFIG_ENABLED: 'true'
+
   # PRODUTOS Microservice : exemplo Postgres
   pgadmin:
     #image: dpage/pgadmin4
