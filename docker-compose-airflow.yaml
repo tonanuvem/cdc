@@ -342,7 +342,7 @@ services:
   jupyter:
     image: jupyter/base-notebook
     volumes:
-      - ${AIRFLOW_PROJ_DIR:-.}:/home/jovyan/work
+      - ${AIRFLOW_PROJ_DIR:-.}/dags:/home/jovyan/work
     ports:
       - "8880:8888"
     #command: start-notebook.sh --NotebookApp.password='argon2:$argon2id$v=19$m=10240,t=10,p=8$cIQ7S1OapqyvWzmH636CsA$fh0xOdGwdwv6/cxW5Bqi2mPZuSZlG0zGLwcxl7Ulvac'
