@@ -1,3 +1,5 @@
+# Se faltar memoria, poderia dar um Stop : nifi e elasticsearch
+
 # Download the docker-compose.yaml file
 wget  -O docker-compose-airflow.yaml 'https://airflow.apache.org/docs/apache-airflow/stable/docker-compose.yaml'
 wget 'https://airflow.apache.org/docs/apache-airflow/2.3.3/airflow.sh'
