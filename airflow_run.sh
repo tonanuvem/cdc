@@ -2,6 +2,8 @@
 
 # https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
 
+# https://www.astronomer.io/docs/learn/airflow-kafka
+
 # https://medium.com/apache-airflow/data-engineering-end-to-end-project-part-1-airflow-kafka-cassandra-mongodb-docker-a87f2daec55e
 # https://medium.com/apache-airflow/data-engineering-end-to-end-project-part-2-airflow-kafka-cassandra-mongodb-docker-52a2ec7113de
 
@@ -20,6 +22,15 @@ docker-compose -f docker-compose-airflow.yaml up -d airflow-init
 
 # Start up all services
 docker-compose -f docker-compose-airflow.yaml up -d
+
+echo "Aguardando TOKEN (geralmente 1 min)"
+while [ "$(docker logs cdc-jupyter-1 2>&1 | grep token | grep 127. | grep NotebookApp | wc -l)" != "1" ]; do
+  printf "."
+  sleep 1
+done
+echo "Token Pronto."
+TOKEN=$(docker logs cdc-jupyter-1 2>&1 | grep token | grep 127. | grep NotebookApp | sed -n 's/.*?token=\([a-f0-9]*\).*/\1/p')
+echo ""
 
 
 IP=$(curl -s checkip.amazonaws.com)
