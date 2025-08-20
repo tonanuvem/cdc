@@ -345,7 +345,7 @@ services:
       - ${AIRFLOW_PROJ_DIR:-.}:/home/jovyan/work
     ports:
       - "8880:8888"
-    command: start-notebook.sh --NotebookApp.password='argon2:$argon2id$v=19$m=10240,t=10,p=8$cIQ7S1OapqyvWzmH636CsA$fh0xOdGwdwv6/cxW5Bqi2mPZuSZlG0zGLwcxl7Ulvac'
+    #command: start-notebook.sh --NotebookApp.password='argon2:$argon2id$v=19$m=10240,t=10,p=8$cIQ7S1OapqyvWzmH636CsA$fh0xOdGwdwv6/cxW5Bqi2mPZuSZlG0zGLwcxl7Ulvac'
 
 volumes:
   postgres-db-volume:
