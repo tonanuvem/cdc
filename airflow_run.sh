@@ -9,10 +9,11 @@ mkdir -p ./logs ./plugins ./config
 echo -e "AIRFLOW_UID=$(id -u)" > .env
 
 # Initialize the database
-docker-compose up -f docker-compose-airflow.yaml airflow-init
+docker-compose -f docker-compose-airflow.yaml up -d airflow-init 
 
 # Start up all services
-docker-compose up -f docker-compose-airflow.yaml -d
+docker-compose -f docker-compose-airflow.yaml up -d
+
 
 IP=$(curl checkip.amazonaws.com)
 
