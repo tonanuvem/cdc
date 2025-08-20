@@ -16,3 +16,6 @@ services:
     volumes:
       #- ./docker:/app/docker
       - superset_home:/app/superset_home
+
+volumes:
+  superset_home:
