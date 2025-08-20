@@ -23,7 +23,7 @@ IP=$(curl -s checkip.amazonaws.com)
 echo ""
 echo "URLs do projeto:"
 echo ""
-echo " - AIRFLOW                       : http://$IP:8060      com username/password: airflow"
+echo " - AIRFLOW                       : http://$IP:8080      com username/password: airflow"
 echo ""
 echo " - JUPYTER PARA EDITAR DAGS      : http://$IP:8880      senha: admin"
 echo ""
