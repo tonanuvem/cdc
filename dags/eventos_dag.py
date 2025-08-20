@@ -1,121 +1,82 @@
-from datetime import datetime, timedelta
+"""
+Exemplo adaptado de: https://www.astronomer.io/docs/learn/airflow-kafka
 
-from airflow import DAG
-from airflow.operators.dummy import DummyOperator
-from airflow.operators.email import EmailOperator
-from airflow.operators.python import BranchPythonOperator
-from airflow.operators.python_operator import PythonOperator
-from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
+### DAG continuously listening to a Kafka topic for a specific message
 
-from check_mongodb import check_mongodb_main
-from kafka_producer import kafka_producer_main
-from check_cassandra import check_cassandra_main
-from kafka_create_topic import kafka_create_topic_main
-from kafka_consumer_mongodb import kafka_consumer_mongodb_main
-from kafka_consumer_cassandra import kafka_consumer_cassandra_main
+This DAG will always run and asynchronously monitor a Kafka topic for a message
+which causes the funtion supplied to the `apply_function` parameter to return a value.
+If a value is returned by the `apply_function`, the `event_triggered_function` is
+executed. Afterwards the task will go into a deferred state again.
+"""
 
-start_date = datetime(2022, 10, 19, 12, 20)
+from airflow.decorators import dag
+from pendulum import datetime
+from airflow.providers.apache.kafka.sensors.kafka import (
+    AwaitMessageTriggerFunctionSensor,
+)
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+import json
+import uuid
 
-default_args = {
-    'owner': 'airflow',
-    'start_date': start_date,
-    'retries': 1,
-    'retry_delay': timedelta(seconds=5)
-}
-
-email_cassandra = check_cassandra_main()['email']
-otp_cassandra = check_cassandra_main()['otp']
-email_mongodb = check_mongodb_main()['email']
-otp_mongodb = check_mongodb_main()['otp']
-
-def decide_branch():
-    create_topic = kafka_create_topic_main()
-    if create_topic == "Created":
-        return "topic_created"
-    else:
-        return "topic_already_exists"
+PET_MOODS_NEEDING_A_WALK = ["zoomy", "bouncy"]
+KAFKA_TOPIC = "my_topic"
 
 
-with DAG('airflow_kafka_cassandra_mongodb', default_args=default_args, schedule_interval='@daily', catchup=False) as dag:
+def listen_function(message, pet_moods_needing_a_walk=[]):
+    """Checks if the message received indicates a pet is in
+    a mood listed in `pet_moods_needing_a_walk` when they received the last
+    treat of a treat-series."""
 
-    create_new_topic = BranchPythonOperator(task_id='create_new_topic', python_callable=decide_branch)
-    
-    kafka_consumer_cassandra = PythonOperator(task_id='kafka_consumer_cassandra', python_callable=kafka_consumer_cassandra_main,
-                             retries=2, retry_delay=timedelta(seconds=10),
-                             execution_timeout=timedelta(seconds=45))
-    
-    kafka_consumer_mongodb = PythonOperator(task_id='kafka_consumer_mongodb', python_callable=kafka_consumer_mongodb_main,
-                             retries=2, retry_delay=timedelta(seconds=10),
-                             execution_timeout=timedelta(seconds=45))
-    
-    kafka_producer = PythonOperator(task_id='kafka_producer', python_callable=kafka_producer_main,
-                             retries=2, retry_delay=timedelta(seconds=10),
-                             execution_timeout=timedelta(seconds=45))
-    
-    check_cassandra = PythonOperator(task_id='check_cassandra', python_callable=check_cassandra_main,
-                             retries=2, retry_delay=timedelta(seconds=10),
-                             execution_timeout=timedelta(seconds=45))
-    
-    check_mongodb = PythonOperator(task_id='check_mongodb', python_callable=check_mongodb_main,
-                             retries=2, retry_delay=timedelta(seconds=10),
-                             execution_timeout=timedelta(seconds=45))
+    message_content = json.loads(message.value())
+    print(f"Full message: {message_content}")
+    pet_name = message_content["pet_name"]
+    pet_mood_post_treat = message_content["pet_mood_post_treat"]
+    final_treat = message_content["final_treat"]
+    if final_treat:
+        if pet_mood_post_treat in pet_moods_needing_a_walk:
+            return pet_name, pet_mood_post_treat
 
-    topic_created = DummyOperator(task_id="topic_created")
 
-    topic_already_exists = DummyOperator(task_id="topic_already_exists")
+def event_triggered_function(event, **context):
+    "Kicks off a downstream DAG with conf and waits for its completion."
 
-    send_email_cassandra = EmailOperator(
-        task_id='send_email_cassandra',
-        to=email_cassandra,
-        subject='One-Time-Password',
-        html_content=f"""
-                <html>
-                <body>
-                <h1>Your OTP</h1>
-                <p>{otp_cassandra}</p>
-                </body>
-                </html>
-                """
-        )
+    pet_name = event[0]
+    pet_mood_post_treat = event[1]
+    print(
+        f"Due to {pet_name} being in a {pet_mood_post_treat} mood, a walk is being initiated..."
+    )
+    # use the TriggerDagRunOperator (TDRO) to kick off a downstream DAG
+    TriggerDagRunOperator(
+        trigger_dag_id="walking_my_pet",
+        task_id=f"triggered_downstream_dag_{uuid.uuid4()}",
+        wait_for_completion=True,  # wait for downstream DAG completion
+        conf={"pet_name": pet_name},
+        poke_interval=5,
+    ).execute(context)
 
-    send_email_mongodb = EmailOperator(
-        task_id='send_email_mongodb',
-        to=email_mongodb,
-        subject='One-Time-Password',
-        html_content=f"""
-                <html>
-                <body>
-                <h1>You can find your One Time Password below</h1>
-                <p>{otp_mongodb}</p>
-                </body>
-                </html>
-                """
-        )
+    print(f"The walk has concluded and {pet_name} is now happily taking a nap!")
 
-    send_slack_cassandra = SlackWebhookOperator(
-    task_id='send_slack_cassandra',
-    slack_webhook_conn_id = 'slack_webhook',
-    message=f"""
-            :red_circle: New e-mail and OTP arrival
-            :email: -> {email_cassandra}
-            :ninja: -> {otp_cassandra}
-            """,
-    channel='#data-engineering',
-    username='airflow'
+
+@dag(
+    start_date=datetime(2023, 4, 1),
+    schedule="@continuous",
+    max_active_runs=1,
+    catchup=False,
+    render_template_as_native_obj=True,
+)
+def listen_to_the_stream():
+    listen_for_mood = AwaitMessageTriggerFunctionSensor(
+        task_id="listen_for_mood",
+        kafka_config_id="kafka_listener",
+        topics=[KAFKA_TOPIC],
+        # the apply function will be used from within the triggerer, this is
+        # why it needs to be a dot notation string
+        apply_function="listen_to_the_stream.listen_function",
+        poll_interval=5,
+        poll_timeout=1,
+        apply_function_kwargs={"pet_moods_needing_a_walk": PET_MOODS_NEEDING_A_WALK},
+        event_triggered_function=event_triggered_function,
     )
 
-    send_slack_mongodb = SlackWebhookOperator(
-    task_id='send_slack_mongodb',
-    slack_webhook_conn_id = 'slack_webhook',
-    message=f"""
-            :red_circle: New e-mail and OTP arrival
-            :email: -> {email_mongodb}
-            :ninja: -> {otp_mongodb}
-            """,
-    channel='#data-engineering',
-    username='airflow'
-    )
 
-    create_new_topic >> [topic_created, topic_already_exists] >> kafka_producer
-    kafka_consumer_cassandra >> check_cassandra >> send_email_cassandra >> send_slack_cassandra
-    kafka_consumer_mongodb >> check_mongodb >> send_email_mongodb >> send_slack_mongodb
+listen_to_the_stream()
