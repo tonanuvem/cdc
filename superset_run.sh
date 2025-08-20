@@ -31,7 +31,7 @@ docker exec -it superset_app superset db upgrade
 #Load Examples
 # docker exec -it superset_app superset load_examples
 
-
+# SQL ALCHEMY URI que sera usada: elasticsearch+http://elasticsearch:9200
 # Instalar o driver Elasticsearch DBAPI
 docker exec -it superset_app pip install elasticsearch-dbapi
 
