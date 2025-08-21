@@ -25,12 +25,12 @@ docker-compose -f docker-compose-airflow.yaml up -d airflow-init
 docker-compose -f docker-compose-airflow.yaml up -d
 
 echo "Aguardando TOKEN (geralmente 1 min)"
-#while [ "$(docker logs cdc-jupyter-1 2>&1 | grep token | grep 127. | grep NotebookApp | wc -l)" != "1" ]; do
+#while [ "$(docker logs cdc-jupyter-1 2>&1 | grep token | grep 127. | wc -l)" != "1" ]; do
 #  printf "."
 #  sleep 1
 #done
 echo "Token Pronto."
-TOKEN=$(docker logs cdc-jupyter-1 2>&1 | grep token | grep 127. | grep NotebookApp | sed -n 's/.*?token=\([a-f0-9]*\).*/\1/p')
+TOKEN=$(docker logs cdc-jupyter-1 2>&1 | grep token | grep 127. | sed -n 's/.*?token=\([a-f0-9]*\).*/\1/p' | uniq)
 echo ""
 
 
@@ -40,7 +40,7 @@ echo "URLs do projeto:"
 echo ""
 echo " - AIRFLOW                       : http://$IP:8080      com username/password: airflow"
 echo ""
-echo " - JUPYTER PARA EDITAR DAGS      : http://$IP:8880      senha: admin"
+echo " - JUPYTER PARA EDITAR DAGS      : http://$IP:8880/lab?token=$TOKEN"
 echo ""
 echo ""
 
