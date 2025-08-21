@@ -12,7 +12,7 @@ def send_to_teams_func(**context):
     kafka_msg = context['ti'].xcom_pull(task_ids="read_kafka_events", key="return_value")
 
     # 🔁 Insira aqui seu webhook do Teams
-    webhook_url = "https://outlook.office.com/webhook/..."  # <- Substitua por seu Webhook real
+    webhook_url = "INSERIR_WEBHOOK"
 
     teams_message = pymsteams.connectorcard(webhook_url)
     teams_message.text(f"📢 Novo evento Kafka no tópico `postgresdb.public.products`:\n\n{str(kafka_msg)}")
