@@ -78,7 +78,7 @@ x-airflow-common:
     #_PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     _PIP_ADDITIONAL_REQUIREMENTS: |
         apache-airflow-providers-apache-kafka
-        apache-airflow-providers-microsoft-teams
+        pymsteams
     
     # The following line can be used to set a custom config file, stored in the local config folder
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
