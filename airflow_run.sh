@@ -1,4 +1,5 @@
-# Se faltar memoria, poderia dar um Stop : nifi e elasticsearch
+# Se faltar memoria, dar um Stop : nifi e elasticsearch
+docker-compose stop nifi elasticsearch
 
 # https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
 
