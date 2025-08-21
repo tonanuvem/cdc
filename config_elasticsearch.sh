@@ -1,7 +1,9 @@
 # aguarda o ES subir
+
+echo ""
+echo ""
 until docker exec elasticsearch curl -s -u elastic:changeme http://localhost:9200/_cluster/health | grep -q '"status"'; do
-  echo "⏳ Aguardando Elasticsearch..."
-  sleep 5
+  printf "."; sleep 5
 done
 
 # cria o pipeline
@@ -25,4 +27,6 @@ docker exec elasticsearch curl -s -u elastic:changeme -X PUT "http://localhost:9
         }
       }'
 
+echo ""
+echo ""
 echo "🎉 Elasticsearch configurado com pipeline + índice!"
