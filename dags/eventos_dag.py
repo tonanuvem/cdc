@@ -11,7 +11,7 @@ from airflow.providers.kafka.operators.kafka import KafkaConsumerOperator
 def send_to_teams_func(**context):
     kafka_msg = context['ti'].xcom_pull(task_ids="read_kafka_events", key="return_value")
 
-    # 🔁 Insira aqui seu webhook do Teams
+    # 🔁 Insira aqui o webhook do Teams; perguntar ao Prof. André
     webhook_url = "INSERIR_WEBHOOK"
 
     teams_message = pymsteams.connectorcard(webhook_url)
