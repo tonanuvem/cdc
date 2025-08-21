@@ -19,7 +19,7 @@ with DAG(
     # O parametro "apply_async" armazena o resultado no XComs
     read_kafka_events = KafkaConsumerOperator(
         task_id="read_kafka_events",
-        topics=["relatorios"],  # Nome do seu tópico. Se for 'cdc_server.public.produtos', use esse.
+        topics=["postgresdb.public.products"],  # Nome do seu tópico. Se for 'cdc_server.public.produtos', use esse.
         kafka_conn_id="kafka_airflow_teams",  # Usa a conexão que você já configurou
         consumer_timeout=30.0, # Timeout para o consumidor
         max_messages=1, # Lê apenas 1 mensagem por execução
@@ -31,10 +31,10 @@ with DAG(
     send_to_teams = SimpleHttpOperator(
         task_id="send_to_teams",
         http_conn_id="teams_webhook_conn", # Usa a conexão do Teams que você criou
-        endpoint="", # O endpoint já está no Host da conexão
+        endpoint="", # O endpoint já estará configurado do AirFlow
         method="POST",
         headers={"Content-type": "application/json"},
-        data='{{ {"text": "Novo evento CDC no Kafka: " + task_instance.xcom_pull(task_ids="read_kafka_events", key="return_value") | string | replace("\\"", "") } }}',
+        data='{{ {"text": "Novo evento CDC topico postgresdb.public.products do Kafka: " + task_instance.xcom_pull(task_ids="read_kafka_events", key="return_value") | string | replace("\\"", "") } }}',
         log_response=True,
     )
 
