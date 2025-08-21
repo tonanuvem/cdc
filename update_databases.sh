@@ -102,7 +102,7 @@ add_17_products() {
     ('Tênis casual branco', 199.00, 8, 'in_stock', NOW() - INTERVAL '56 days'),
     ('Jaqueta bomber preta', 149.90, 6, 'in_stock', NOW() - INTERVAL '54 days'),
     ('Shorts jeans desbotado', 59.90, 15, 'in_stock', NOW() - INTERVAL '52 days'),
-    ('Sapato social preto', 179.90, 4, 'low_stock', NOW() - INTERVAL '50 days'),
+    ('Sapato social preto', 179.90, 4, 'running_low', NOW() - INTERVAL '50 days'),
     ('Boné snapback azul', 45.90, 20, 'in_stock', NOW() - INTERVAL '48 days'),
     ('Moletom capuz cinza', 89.90, 10, 'in_stock', NOW() - INTERVAL '46 days'),
     ('Regata fitness preta', 29.90, 30, 'in_stock', NOW() - INTERVAL '44 days'),
@@ -110,7 +110,7 @@ add_17_products() {
     ('Chinelo slide preto', 39.90, 50, 'in_stock', NOW() - INTERVAL '40 days'),
     ('Camisa social branca', 99.90, 7, 'in_stock', NOW() - INTERVAL '38 days'),
     ('Bermuda tactel verde', 49.90, 18, 'in_stock', NOW() - INTERVAL '36 days'),
-    ('Tênis running vermelho', 249.90, 5, 'low_stock', NOW() - INTERVAL '34 days'),
+    ('Tênis running vermelho', 249.90, 5, 'running_low', NOW() - INTERVAL '34 days'),
     ('Blusa tricot bege', 79.90, 12, 'in_stock', NOW() - INTERVAL '32 days'),
     ('Calça cargo marrom', 109.90, 6, 'in_stock', NOW() - INTERVAL '30 days'),
     ('Sandália couro marrom', 129.90, 9, 'in_stock', NOW() - INTERVAL '28 days');
@@ -125,23 +125,23 @@ add_17_users() {
     
     exec_mysql "
     INSERT INTO $TABELA_USUARIOS (full_name, address, created_at) VALUES 
-    ('Bruce Banner', 'Stark Labs Building', DATE_SUB(NOW(), INTERVAL 60 DAY)),
-    ('Natasha Romanoff', 'SHIELD Headquarters', DATE_SUB(NOW(), INTERVAL 58 DAY)),
-    ('Steve Rogers', 'Brooklyn Heights', DATE_SUB(NOW(), INTERVAL 56 DAY)),
-    ('Thor Odinson', 'Asgard Palace', DATE_SUB(NOW(), INTERVAL 54 DAY)),
-    ('Clint Barton', 'Farmhouse Iowa', DATE_SUB(NOW(), INTERVAL 52 DAY)),
-    ('Wanda Maximoff', 'Westview Avenue', DATE_SUB(NOW(), INTERVAL 50 DAY)),
-    ('Vision', 'Avengers Compound', DATE_SUB(NOW(), INTERVAL 48 DAY)),
-    ('Sam Wilson', 'Washington DC Base', DATE_SUB(NOW(), INTERVAL 46 DAY)),
-    ('Bucky Barnes', 'Brooklyn Apartment', DATE_SUB(NOW(), INTERVAL 44 DAY)),
-    ('Scott Lang', 'San Francisco Bay', DATE_SUB(NOW(), INTERVAL 42 DAY)),
-    ('Hope van Dyne', 'Pym Technologies', DATE_SUB(NOW(), INTERVAL 40 DAY)),
-    ('Carol Danvers', 'Space Station Alpha', DATE_SUB(NOW(), INTERVAL 38 DAY)),
-    ('Stephen Strange', 'Sanctum Sanctorum', DATE_SUB(NOW(), INTERVAL 36 DAY)),
-    ('T\\'Challa', 'Wakanda Palace', DATE_SUB(NOW(), INTERVAL 34 DAY)),
-    ('Shuri', 'Wakanda Lab Center', DATE_SUB(NOW(), INTERVAL 32 DAY)),
-    ('Peter Quill', 'Milano Spaceship', DATE_SUB(NOW(), INTERVAL 30 DAY)),
-    ('Gamora', 'Guardians Base', DATE_SUB(NOW(), INTERVAL 28 DAY));
+    ('Homem de Ferro', 'Torre Stark', DATE_SUB(NOW(), INTERVAL 60 DAY)),
+    ('Capitão América', 'Quartel dos Vingadores', DATE_SUB(NOW(), INTERVAL 58 DAY)),
+    ('Viúva Negra', 'Sede da SHIELD', DATE_SUB(NOW(), INTERVAL 56 DAY)),
+    ('Hulk', 'Laboratórios de Pesquisa', DATE_SUB(NOW(), INTERVAL 54 DAY)),
+    ('Thor', 'Reino de Asgard', DATE_SUB(NOW(), INTERVAL 52 DAY)),
+    ('Loki', 'Prisão de Asgard', DATE_SUB(NOW(), INTERVAL 50 DAY)),
+    ('Doutor Estranho', 'Sanctum Sanctorum', DATE_SUB(NOW(), INTERVAL 48 DAY)),
+    ('Pantera Negra', 'Palácio de Wakanda', DATE_SUB(NOW(), INTERVAL 46 DAY)),
+    ('Homem-Aranha', 'Apartamento em Queens', DATE_SUB(NOW(), INTERVAL 44 DAY)),
+    ('Flash', 'Laboratórios S.T.A.R.', DATE_SUB(NOW(), INTERVAL 42 DAY)),
+    ('Batman', 'Mansão Wayne', DATE_SUB(NOW(), INTERVAL 40 DAY)),
+    ('Superman', 'Planeta Diário', DATE_SUB(NOW(), INTERVAL 38 DAY)),
+    ('Mulher-Maravilha', 'Themyscira', DATE_SUB(NOW(), INTERVAL 36 DAY)),
+    ('Aquaman', 'Reino da Atlântida', DATE_SUB(NOW(), INTERVAL 34 DAY)),
+    ('Arlequina', 'Esquadrão Suicida', DATE_SUB(NOW(), INTERVAL 32 DAY)),
+    ('Coringa', 'Asilo Arkham', DATE_SUB(NOW(), INTERVAL 30 DAY)),
+    ('Groot', 'Guardiões da Galáxia', DATE_SUB(NOW(), INTERVAL 28 DAY));
     "
     
     log "✅ 17 novos usuários adicionados"
@@ -171,7 +171,7 @@ simulate_product_updates() {
             
             # Status baseado na quantidade
             if [ "$QTY_VARIATION" -le 3 ]; then
-                STATUS="'low_stock'"
+                STATUS="'running_low'"
             elif [ "$QTY_VARIATION" -eq 0 ]; then
                 STATUS="'out_of_stock'"
             else
@@ -281,8 +281,8 @@ create_analysis_patterns() {
         price = price * 1.25,
         updated_at = NOW() - INTERVAL '5 days'
     WHERE name_description LIKE '%shorts%' 
-       OR name_description LIKE '%regata%' 
-       OR name_description LIKE '%chinelo%';
+        OR name_description LIKE '%regata%' 
+        OR name_description LIKE '%chinelo%';
     "
     
     # Black Friday: grandes descontos
@@ -305,8 +305,8 @@ create_analysis_patterns() {
             ELSE 0
         END,
         status = CASE 
-            WHEN quantity > 10 THEN 'low_stock'
-            WHEN quantity > 5 THEN 'low_stock'
+            WHEN quantity > 10 THEN 'running_low'
+            WHEN quantity > 5 THEN 'running_low'
             ELSE 'out_of_stock'
         END,
         updated_at = NOW() - INTERVAL '2 days'
@@ -327,12 +327,12 @@ create_analysis_patterns() {
     exec_mysql "
     UPDATE $TABELA_USUARIOS SET 
         full_name = CONCAT('Dr. ', full_name),
-        address = CONCAT(address, ' - Medical District')
+        address = CONCAT(address, ' - Distrito Médico')
     WHERE id IN (SELECT id FROM (SELECT id FROM $TABELA_USUARIOS ORDER BY RAND() LIMIT 3) tmp);
     
     UPDATE $TABELA_USUARIOS SET 
         full_name = CONCAT(full_name, ' Jr.'),
-        address = CONCAT(address, ' - Residential Area')
+        address = CONCAT(address, ' - Área Residencial')
     WHERE id IN (SELECT id FROM (SELECT id FROM $TABELA_USUARIOS ORDER BY RAND() LIMIT 4) tmp);
     "
     
@@ -351,7 +351,7 @@ show_final_statistics() {
         ROUND(AVG(price), 2) as preco_medio,
         SUM(quantity) as estoque_total,
         COUNT(CASE WHEN status = 'in_stock' THEN 1 END) as em_estoque,
-        COUNT(CASE WHEN status = 'low_stock' THEN 1 END) as estoque_baixo,
+        COUNT(CASE WHEN status = 'running_low' THEN 1 END) as estoque_baixo,
         COUNT(CASE WHEN status = 'out_of_stock' THEN 1 END) as sem_estoque
     FROM $TABELA_PRODUTOS;
     "
