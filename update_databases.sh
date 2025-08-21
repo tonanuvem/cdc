@@ -1,20 +1,20 @@
 #!/bin/bash
 
-# Script para inserção de dados em lote para demonstração dos relatórios
-# Adiciona 17 produtos + 17 usuários e faz ~20 alterações em cada um
+# Script para inserção de dados em lote para demonstracao dos relatorios
+# Adiciona 17 produtos + 17 usuarios e faz ~20 alteracoes em cada um
 
 set -e
 
-# Configuração dos contêineres
+# Configuracao dos conteineres
 CONTEINER_POSTGRES="cdc-postgresdb-1"
 CONTEINER_MYSQL="cdc-mysqldb-1"
 
-# Configuração das tabelas
+# Configuracao das tabelas
 TABELA_PRODUTOS="products"
 TABELA_USUARIOS="users"
 DATABASE_MYSQL="usuarios"
 
-echo "🚀 Iniciando inserção de dados em lote para demonstração de relatórios..."
+echo "🚀 Iniciando insercao de dados em lote para demonstracao de relatorios..."
 
 # Cores para output
 RED='\033[0;31m'
@@ -23,7 +23,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Função para logging
+# Funcao para logging
 log() {
     echo -e "${GREEN}[$(date '+%Y-%m-%d %H:%M:%S')] $1${NC}"
 }
@@ -40,29 +40,77 @@ info() {
     echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] ℹ️  $1${NC}"
 }
 
-# Verificar se os containers estão rodando
+# --- Estrutura dos bancos de dados (apenas para referencia) ---
+
+: '
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+  CREATE TYPE "products_status" AS ENUM (
+    "out_of_stock",
+    "in_stock",
+    "running_low"
+  );
+  CREATE TABLE "products" (
+    "id" SERIAL PRIMARY KEY,
+    "name_description" varchar,
+    "price" int,
+    "quantity" int,
+    "status" products_status,
+    "created_at" TIMESTAMPTZ DEFAULT Now(),
+    "updated_at" TIMESTAMPTZ DEFAULT Now()
+  );
+  CREATE INDEX "product_status" ON "products" ("status");
+  CREATE UNIQUE INDEX ON "products" ("id");
+  
+  INSERT INTO products (name_description,price,quantity,status) VALUES ('Camisa branca tipo polo', 69, 5, 'in_stock');
+  INSERT INTO products (name_description,price,quantity,status) VALUES ('Bermuda preta sem bolso', 29, 5, 'in_stock');
+  INSERT INTO products (name_description,price,quantity,status) VALUES ('Meia preta do tipo social', 19, 5, 'in_stock');  
+EOSQL
+
+USE usuarios;
+
+CREATE TABLE `users` (
+  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `full_name` varchar(255),
+  `created_at` timestamp,
+  `updated_at` timestamp,
+  `address` varchar(255)
+);
+
+SET character_set_client = utf8;
+SET character_set_connection = utf8;
+SET character_set_results = utf8;
+SET collation_connection = utf8_general_ci;
+
+INSERT INTO users (full_name,created_at, address) VALUES("Indiana Jones",NOW(),"Adventures Avenue");
+INSERT INTO users (full_name,created_at, address) VALUES("Jack Sparrow",NOW(),"Master Ship Square");
+INSERT INTO users (full_name,created_at, address) VALUES("John Snow",NOW(),"Kinds Landing Westeros");
+'
+
+# --- Funcoes do script ---
+
+# Verificar se os containers estao rodando
 check_containers() {
-    log "Verificando se os containers estão rodando..."
+    log "Verificando se os containers estao rodando..."
     
     if ! docker ps | grep -q $CONTEINER_POSTGRES; then
-        error "Container $CONTEINER_POSTGRES não está rodando!"
+        error "Container $CONTEINER_POSTGRES nao esta rodando!"
         exit 1
     fi
     
     if ! docker ps | grep -q $CONTEINER_MYSQL; then
-        error "Container $CONTEINER_MYSQL não está rodando!"
+        error "Container $CONTEINER_MYSQL nao esta rodando!"
         exit 1
     fi
     
-    log "✅ Todos os containers estão rodando"
+    log "✅ Todos os containers estao rodando"
 }
 
-# Função para executar SQL no PostgreSQL
+# Funcao para executar SQL no PostgreSQL
 exec_postgres() {
     docker exec -i $CONTEINER_POSTGRES psql -U postgres -d postgres -c "$1"
 }
 
-# Função para executar SQL no MySQL
+# Funcao para executar SQL no MySQL
 exec_mysql() {
     docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin $DATABASE_MYSQL -e "$1"
 }
@@ -74,7 +122,7 @@ check_existing_data() {
     EXISTING_PRODUCTS=$(docker exec -i $CONTEINER_POSTGRES psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM $TABELA_PRODUTOS;" | tr -d ' ' | head -n 1)
     EXISTING_USERS=$(docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin $DATABASE_MYSQL -N -e "SELECT COUNT(*) FROM $TABELA_USUARIOS;" 2>/dev/null | tr -d ' ' | head -n 1)
     
-    # Verificar se os valores são números válidos
+    # Verificar se os valores sao numeros validos
     if ! [[ "$EXISTING_PRODUCTS" =~ ^[0-9]+$ ]]; then
         EXISTING_PRODUCTS=0
     fi
@@ -84,10 +132,10 @@ check_existing_data() {
     fi
     
     info "Produtos existentes: $EXISTING_PRODUCTS"
-    info "Usuários existentes: $EXISTING_USERS"
+    info "Usuarios existentes: $EXISTING_USERS"
     
     if [ "$EXISTING_PRODUCTS" -lt 3 ] || [ "$EXISTING_USERS" -lt 3 ]; then
-        warn "Menos de 3 produtos/usuários existentes. Continuando mesmo assim..."
+        warn "Menos de 3 produtos/usuarios existentes. Continuando mesmo assim..."
     fi
 }
 
@@ -97,59 +145,59 @@ add_17_products() {
     
     exec_postgres "
     INSERT INTO $TABELA_PRODUTOS (name_description, price, quantity, status, created_at) VALUES 
-    ('Camiseta básica branca', 35.90, 25, 'in_stock', NOW() - INTERVAL '60 days'),
-    ('Calça jeans slim azul', 89.90, 12, 'in_stock', NOW() - INTERVAL '58 days'),
-    ('Tênis casual branco', 199.00, 8, 'in_stock', NOW() - INTERVAL '56 days'),
+    ('Camiseta basica branca', 35.90, 25, 'in_stock', NOW() - INTERVAL '60 days'),
+    ('Calca jeans slim azul', 89.90, 12, 'in_stock', NOW() - INTERVAL '58 days'),
+    ('Tenis casual branco', 199.00, 8, 'in_stock', NOW() - INTERVAL '56 days'),
     ('Jaqueta bomber preta', 149.90, 6, 'in_stock', NOW() - INTERVAL '54 days'),
     ('Shorts jeans desbotado', 59.90, 15, 'in_stock', NOW() - INTERVAL '52 days'),
     ('Sapato social preto', 179.90, 4, 'running_low', NOW() - INTERVAL '50 days'),
-    ('Boné snapback azul', 45.90, 20, 'in_stock', NOW() - INTERVAL '48 days'),
+    ('Bone snapback azul', 45.90, 20, 'in_stock', NOW() - INTERVAL '48 days'),
     ('Moletom capuz cinza', 89.90, 10, 'in_stock', NOW() - INTERVAL '46 days'),
     ('Regata fitness preta', 29.90, 30, 'in_stock', NOW() - INTERVAL '44 days'),
-    ('Calça moletom jogger', 69.90, 8, 'in_stock', NOW() - INTERVAL '42 days'),
+    ('Calca moletom jogger', 69.90, 8, 'in_stock', NOW() - INTERVAL '42 days'),
     ('Chinelo slide preto', 39.90, 50, 'in_stock', NOW() - INTERVAL '40 days'),
     ('Camisa social branca', 99.90, 7, 'in_stock', NOW() - INTERVAL '38 days'),
     ('Bermuda tactel verde', 49.90, 18, 'in_stock', NOW() - INTERVAL '36 days'),
-    ('Tênis running vermelho', 249.90, 5, 'running_low', NOW() - INTERVAL '34 days'),
+    ('Tenis running vermelho', 249.90, 5, 'running_low', NOW() - INTERVAL '34 days'),
     ('Blusa tricot bege', 79.90, 12, 'in_stock', NOW() - INTERVAL '32 days'),
-    ('Calça cargo marrom', 109.90, 6, 'in_stock', NOW() - INTERVAL '30 days'),
-    ('Sandália couro marrom', 129.90, 9, 'in_stock', NOW() - INTERVAL '28 days');
+    ('Calca cargo marrom', 109.90, 6, 'in_stock', NOW() - INTERVAL '30 days'),
+    ('Sandalia couro marrom', 129.90, 9, 'in_stock', NOW() - INTERVAL '28 days');
     "
     
     log "✅ 17 novos produtos adicionados"
 }
 
-# Inserir 17 novos usuários
+# Inserir 17 novos usuarios
 add_17_users() {
-    log "Adicionando 17 novos usuários..."
+    log "Adicionando 17 novos usuarios..."
     
     exec_mysql "
     INSERT INTO $TABELA_USUARIOS (full_name, address, created_at) VALUES 
     ('Homem de Ferro', 'Torre Stark', DATE_SUB(NOW(), INTERVAL 60 DAY)),
-    ('Capitão América', 'Quartel dos Vingadores', DATE_SUB(NOW(), INTERVAL 58 DAY)),
-    ('Viúva Negra', 'Sede da SHIELD', DATE_SUB(NOW(), INTERVAL 56 DAY)),
-    ('Hulk', 'Laboratórios de Pesquisa', DATE_SUB(NOW(), INTERVAL 54 DAY)),
+    ('Capitao America', 'Quartel dos Vingadores', DATE_SUB(NOW(), INTERVAL 58 DAY)),
+    ('Viuva Negra', 'Sede da SHIELD', DATE_SUB(NOW(), INTERVAL 56 DAY)),
+    ('Hulk', 'Laboratorios de Pesquisa', DATE_SUB(NOW(), INTERVAL 54 DAY)),
     ('Thor', 'Reino de Asgard', DATE_SUB(NOW(), INTERVAL 52 DAY)),
-    ('Loki', 'Prisão de Asgard', DATE_SUB(NOW(), INTERVAL 50 DAY)),
+    ('Loki', 'Prisao de Asgard', DATE_SUB(NOW(), INTERVAL 50 DAY)),
     ('Doutor Estranho', 'Sanctum Sanctorum', DATE_SUB(NOW(), INTERVAL 48 DAY)),
-    ('Pantera Negra', 'Palácio de Wakanda', DATE_SUB(NOW(), INTERVAL 46 DAY)),
+    ('Pantera Negra', 'Palacio de Wakanda', DATE_SUB(NOW(), INTERVAL 46 DAY)),
     ('Homem-Aranha', 'Apartamento em Queens', DATE_SUB(NOW(), INTERVAL 44 DAY)),
-    ('Flash', 'Laboratórios S.T.A.R.', DATE_SUB(NOW(), INTERVAL 42 DAY)),
-    ('Batman', 'Mansão Wayne', DATE_SUB(NOW(), INTERVAL 40 DAY)),
-    ('Superman', 'Planeta Diário', DATE_SUB(NOW(), INTERVAL 38 DAY)),
+    ('Flash', 'Laboratorios S.T.A.R.', DATE_SUB(NOW(), INTERVAL 42 DAY)),
+    ('Batman', 'Manao Wayne', DATE_SUB(NOW(), INTERVAL 40 DAY)),
+    ('Superman', 'Planeta Diario', DATE_SUB(NOW(), INTERVAL 38 DAY)),
     ('Mulher-Maravilha', 'Themyscira', DATE_SUB(NOW(), INTERVAL 36 DAY)),
-    ('Aquaman', 'Reino da Atlântida', DATE_SUB(NOW(), INTERVAL 34 DAY)),
-    ('Arlequina', 'Esquadrão Suicida', DATE_SUB(NOW(), INTERVAL 32 DAY)),
+    ('Aquaman', 'Reino da Atlantida', DATE_SUB(NOW(), INTERVAL 34 DAY)),
+    ('Arlequina', 'Esquadrao Suicida', DATE_SUB(NOW(), INTERVAL 32 DAY)),
     ('Coringa', 'Asilo Arkham', DATE_SUB(NOW(), INTERVAL 30 DAY)),
-    ('Groot', 'Guardiões da Galáxia', DATE_SUB(NOW(), INTERVAL 28 DAY));
+    ('Groot', 'Guardioes da Galaxia', DATE_SUB(NOW(), INTERVAL 28 DAY));
     "
     
-    log "✅ 17 novos usuários adicionados"
+    log "✅ 17 novos usuarios adicionados"
 }
 
-# Fazer ~20 alterações em produtos (distribuído ao longo do tempo)
+# Fazer ~20 alteracoes em produtos (distribuido ao longo do tempo)
 simulate_product_updates() {
-    log "Simulando ~20 alterações por produto ao longo do tempo..."
+    log "Simulando ~20 alteracoes por produto ao longo do tempo..."
     
     # Get all product IDs
     PRODUCT_IDS=$(docker exec -i $CONTEINER_POSTGRES psql -U postgres -d postgres -t -c "SELECT id FROM $TABELA_PRODUTOS ORDER BY id;" | tr -d ' ')
@@ -159,14 +207,14 @@ simulate_product_updates() {
             continue
         fi
         
-        info "Criando histórico para produto ID: $product_id"
+        info "Criando historico para produto ID: $product_id"
         
-        # 20 alterações por produto distribuídas em 60 dias
+        # 20 alteracoes por produto distribuidas em 60 dias
         for i in {1..20}; do
-            # Variação aleatória de preço (-20% a +30%)
-            PRICE_VARIATION=$(shuf -i 80-130 -n 1)  # 80% a 130% do preço atual
+            # Variacao aleatoria de preco (-20% a +30%)
+            PRICE_VARIATION=$(shuf -i 80-130 -n 1)  # 80% a 130% do preco atual
             
-            # Variação de quantidade (1 a 50)
+            # Variacao de quantidade (1 a 50)
             QTY_VARIATION=$(shuf -i 1-50 -n 1)
             
             # Status baseado na quantidade
@@ -178,7 +226,7 @@ simulate_product_updates() {
                 STATUS="'in_stock'"
             fi
             
-            # Dias atrás para esta alteração
+            # Dias atras para esta alteracao
             DAYS_AGO=$((60 - i * 3))
             if [ "$DAYS_AGO" -lt 0 ]; then
                 DAYS_AGO=0
@@ -193,19 +241,19 @@ simulate_product_updates() {
             WHERE id = $product_id;
             " > /dev/null 2>&1
             
-            # Sleep para não sobrecarregar
+            # Sleep para nao sobrecarregar
             sleep 0.1
         done
     done
     
-    log "✅ Simulação de alterações de produtos concluída"
+    log "✅ Simulacao de alteracoes de produtos concluida"
 }
 
-# Fazer ~20 alterações em usuários
+# Fazer ~20 alteracoes em usuarios
 simulate_user_updates() {
-    log "Simulando ~20 alterações por usuário ao longo do tempo..."
+    log "Simulando ~20 alteracoes por usuario ao longo do tempo..."
     
-    # Arrays de variações para nomes e endereços
+    # Arrays de variacoes para nomes e enderecos
     declare -a NAME_PREFIXES=("Dr." "Prof." "Sr." "Sra." "Mr." "Ms." "")
     declare -a NAME_SUFFIXES=("Jr." "Sr." "II" "III" "PhD" "MD" "")
     declare -a STREET_TYPES=("Street" "Avenue" "Boulevard" "Road" "Lane" "Drive" "Way")
@@ -219,15 +267,15 @@ simulate_user_updates() {
             continue
         fi
         
-        info "Criando histórico para usuário ID: $user_id"
+        info "Criando historico para usuario ID: $user_id"
         
         # Get current user data
         CURRENT_USER=$(docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin $DATABASE_MYSQL -N -e "SELECT full_name FROM $TABELA_USUARIOS WHERE id = $user_id;" 2>/dev/null)
         BASE_NAME=$(echo "$CURRENT_USER" | sed 's/Dr\.\|Prof\.\|Sr\.\|Sra\.\|Mr\.\|Ms\.\|Jr\.\|Sr\.\|II\|III\|PhD\|MD//g' | xargs)
         
-        # 20 alterações por usuário
+        # 20 alteracoes por usuario
         for i in {1..20}; do
-            # Variação no nome (adicionar/remover prefixos/sufixos)
+            # Variacao no nome (adicionar/remover prefixos/sufixos)
             PREFIX=${NAME_PREFIXES[$RANDOM % ${#NAME_PREFIXES[@]}]}
             SUFFIX=${NAME_SUFFIXES[$RANDOM % ${#NAME_SUFFIXES[@]}]}
             
@@ -241,14 +289,14 @@ simulate_user_updates() {
                 NEW_NAME="$BASE_NAME"
             fi
             
-            # Variação no endereço
+            # Variacao no endereco
             STREET_NUM=$((RANDOM % 9999 + 1))
             STREET_NAME="Building $((RANDOM % 100 + 1))"
             STREET_TYPE=${STREET_TYPES[$RANDOM % ${#STREET_TYPES[@]}]}
             CITY=${CITIES[$RANDOM % ${#CITIES[@]}]}
             NEW_ADDRESS="$STREET_NUM $STREET_NAME $STREET_TYPE $CITY"
             
-            # Dias atrás para esta alteração
+            # Dias atras para esta alteracao
             DAYS_AGO=$((60 - i * 3))
             if [ "$DAYS_AGO" -lt 0 ]; then
                 DAYS_AGO=0
@@ -262,20 +310,20 @@ simulate_user_updates() {
             WHERE id = $user_id;
             " > /dev/null 2>&1
             
-            # Sleep para não sobrecarregar
+            # Sleep para nao sobrecarregar
             sleep 0.1
         done
     done
     
-    log "✅ Simulação de alterações de usuários concluída"
+    log "✅ Simulacao de alteracoes de usuarios concluida"
 }
 
-# Criar padrões interessantes para análise
+# Criar padroes interessantes para analise
 create_analysis_patterns() {
-    log "Criando padrões interessantes para análise..."
+    log "Criando padroes interessantes para analise..."
     
-    # Produto sazonal: aumentar preços de alguns produtos específicos
-    info "🌞 Criando padrão sazonal - produtos de verão"
+    # Produto sazonal: aumentar precos de alguns produtos especificos
+    info "🌞 Criando padrao sazonal - produtos de verao"
     exec_postgres "
     UPDATE $TABELA_PRODUTOS SET 
         price = price * 1.25,
@@ -286,7 +334,7 @@ create_analysis_patterns() {
     "
     
     # Black Friday: grandes descontos
-    info "🛍️ Criando padrão Black Friday - descontos massivos"
+    info "🛍️ Criando padrao Black Friday - descontos massivos"
     exec_postgres "
     UPDATE $TABELA_PRODUTOS SET 
         price = price * 0.60,
@@ -296,7 +344,7 @@ create_analysis_patterns() {
     "
     
     # Fim de estoque gradual
-    info "📉 Criando padrão de fim de estoque"
+    info "📉 Criando padrao de fim de estoque"
     exec_postgres "
     UPDATE $TABELA_PRODUTOS SET 
         quantity = CASE 
@@ -313,8 +361,8 @@ create_analysis_patterns() {
     WHERE id IN (SELECT id FROM $TABELA_PRODUTOS ORDER BY RANDOM() LIMIT 5);
     "
     
-    # Reajustes inflacionários
-    info "📈 Criando padrão inflacionário"
+    # Reajustes inflacionarios
+    info "📈 Criando padrao inflacionario"
     exec_postgres "
     UPDATE $TABELA_PRODUTOS SET 
         price = price * 1.15,
@@ -322,26 +370,26 @@ create_analysis_patterns() {
     WHERE price < 100;
     "
     
-    # Mudanças de usuários mais realistas
-    info "👥 Criando mudanças realistas de usuários"
+    # Mudancas de usuarios mais realisticas
+    info "👥 Criando mudancas realisticas de usuarios"
     exec_mysql "
     UPDATE $TABELA_USUARIOS SET 
         full_name = CONCAT('Dr. ', full_name),
-        address = CONCAT(address, ' - Distrito Médico')
+        address = CONCAT(address, ' - Distrito Medico')
     WHERE id IN (SELECT id FROM (SELECT id FROM $TABELA_USUARIOS ORDER BY RAND() LIMIT 3) tmp);
     
     UPDATE $TABELA_USUARIOS SET 
         full_name = CONCAT(full_name, ' Jr.'),
-        address = CONCAT(address, ' - Área Residencial')
+        address = CONCAT(address, ' - Area Residencial')
     WHERE id IN (SELECT id FROM (SELECT id FROM $TABELA_USUARIOS ORDER BY RAND() LIMIT 4) tmp);
     "
     
-    log "✅ Padrões de análise criados"
+    log "✅ Padroes de analise criados"
 }
 
-# Mostrar estatísticas finais
+# Mostrar estatisticas finais
 show_final_statistics() {
-    log "📊 Estatísticas finais dos dados:"
+    log "📊 Estatisticas finais dos dados:"
     
     echo ""
     info "=== PRODUTOS ==="
@@ -357,7 +405,7 @@ show_final_statistics() {
     "
     
     echo ""
-    info "=== RANGE DE PREÇOS ==="
+    info "=== RANGE DE PRECOS ==="
     exec_postgres "
     SELECT 
         ROUND(MIN(price), 2) as preco_minimo,
@@ -368,7 +416,7 @@ show_final_statistics() {
     "
     
     echo ""
-    info "=== USUÁRIOS ==="
+    info "=== USUARIOS ==="
     exec_mysql "
     SELECT 
         COUNT(*) as total_usuarios,
@@ -397,7 +445,7 @@ show_final_statistics() {
     "
     
     echo ""
-    info "=== DISTRIBUIÇÃO POR STATUS ==="
+    info "=== DISTRIBUICAO POR STATUS ==="
     exec_postgres "
     SELECT status, COUNT(*) as quantidade
     FROM $TABELA_PRODUTOS 
@@ -405,32 +453,32 @@ show_final_statistics() {
     "
     
     echo ""
-    log "✅ Dados prontos para análise no Superset!"
-    info "💡 Sugestão: Execute seu pipeline de dados agora para indexar no Elasticsearch"
+    log "✅ Dados prontos para analise no Superset!"
+    info "💡 Sugestao: Execute seu pipeline de dados agora para indexar no Elasticsearch"
 }
 
 # Menu principal
 main_menu() {
     echo ""
     echo "=============================================="
-    echo "📈 GERADOR DE DADOS PARA RELATÓRIOS SUPERSET"
+    echo "📈 GERADOR DE DADOS PARA RELATORIOS SUPERSET"
     echo "=============================================="
     echo ""
-    echo "Este script irá:"
+    echo "Este script ira:"
     echo "• ➕ Adicionar 17 novos produtos"
-    echo "• 👥 Adicionar 17 novos usuários"  
-    echo "• 🔄 Fazer ~20 alterações em cada produto"
-    echo "• 👤 Fazer ~20 alterações em cada usuário"
-    echo "• 📊 Criar padrões interessantes para análise"
+    echo "• 👥 Adicionar 17 novos usuarios"  
+    echo "• 🔄 Fazer ~20 alteracoes em cada produto"
+    echo "• 👤 Fazer ~20 alteracoes em cada usuario"
+    echo "• 📊 Criar padroes interessantes para analise"
     echo ""
-    echo "Escolha uma opção:"
+    echo "Escolha uma opcao:"
     echo "1) 🚀 Executar tudo (RECOMENDADO)"
     echo "2) 📦 Apenas adicionar produtos"
-    echo "3) 👥 Apenas adicionar usuários"
-    echo "4) 🔄 Apenas simular alterações de produtos"
-    echo "5) 👤 Apenas simular alterações de usuários"
-    echo "6) 🎨 Apenas criar padrões de análise"
-    echo "7) 📊 Mostrar estatísticas atuais"
+    echo "3) 👥 Apenas adicionar usuarios"
+    echo "4) 🔄 Apenas simular alteracoes de produtos"
+    echo "5) 👤 Apenas simular alteracoes de usuarios"
+    echo "6) 🎨 Apenas criar padroes de analise"
+    echo "7) 📊 Mostrar estatisticas atuais"
     echo "0) ❌ Sair"
     echo ""
     read -p "Digite sua escolha: " choice
@@ -475,13 +523,13 @@ main_menu() {
             exit 0
             ;;
         *)
-            error "Opção inválida!"
+            error "Opcao invalida!"
             main_menu
             ;;
     esac
 }
 
-# Executar menu principal se for execução direta
+# Executar menu principal se for execucao direta
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main_menu
 fi
