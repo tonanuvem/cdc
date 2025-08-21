@@ -10,6 +10,10 @@ while [ "$(docker logs cdc-connect-1 2>&1 | grep "Finished starting connectors a
   printf "."
   sleep 1
 done
+
+echo "Configurando Elasticsearch"
+sh config_elasticsearch.sh
+
 echo ""
 sh config_cdc.sh
 echo "Config OK"
