@@ -1,5 +1,7 @@
-# Se faltar memoria, dar um Stop : nifi e elasticsearch
+echo "Para evitar falta de memoria, vamos dar um Stop em : nifi e elasticsearch"
+echo ""
 docker-compose stop nifi elasticsearch
+echo ""
 
 # https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
 
