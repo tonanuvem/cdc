@@ -39,6 +39,7 @@ docker exec -it superset_app pip install elasticsearch-dbapi
 
 docker exec -it superset_app superset init
 
+docker restart superset_app
 
 echo ""
 echo ""
