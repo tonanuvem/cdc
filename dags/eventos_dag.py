@@ -5,18 +5,25 @@ import pymsteams
 
 from airflow.models.dag import DAG
 from airflow.operators.python import PythonOperator
-from airflow.providers.kafka.operators.kafka import KafkaConsumerOperator
+from airflow.providers.apache.kafka.operators.consume import ConsumeFromTopicOperator
 
-# Função para enviar mensagem ao Microsoft Teams
+
+# 🔔 Função para enviar mensagem ao Microsoft Teams
 def send_to_teams_func(**context):
-    kafka_msg = context['ti'].xcom_pull(task_ids="read_kafka_events", key="return_value")
+    kafka_msg = context['ti'].xcom_pull(
+        task_ids="read_kafka_events",
+        key="return_value"
+    )
 
-    # 🔁 Insira aqui o webhook do Teams; perguntar ao Prof. André
+    # 🔁 Insira aqui o webhook do Teams
     webhook_url = "INSERIR_WEBHOOK"
 
     teams_message = pymsteams.connectorcard(webhook_url)
-    teams_message.text(f"📢 Novo evento Kafka no tópico `postgresdb.public.products`:\n\n{str(kafka_msg)}")
+    teams_message.text(
+        f"📢 Novo evento Kafka no tópico `postgresdb.public.products`:\n\n{str(kafka_msg)}"
+    )
     teams_message.send()
+
 
 with DAG(
     dag_id="kafka_to_teams_notifications",
@@ -27,20 +34,20 @@ with DAG(
 ) as dag:
     
     # 1. Ler mensagem do Kafka
-    read_kafka_events = KafkaConsumerOperator(
+    read_kafka_events = ConsumeFromTopicOperator(
         task_id="read_kafka_events",
         topics=["postgresdb.public.products"],
-        kafka_conn_id="kafka_airflow_teams",
-        consumer_timeout=30.0,
+        kafka_config_id="kafka_airflow_teams",   # conexão configurada no Airflow
+        apply_function=lambda msg: msg.value().decode("utf-8"),  # transforma bytes em string
+        consumer_config={"auto.offset.reset": "earliest"},
         max_messages=1,
-        apply_async=True
+        poll_timeout=30,
     )
 
-    # 2. Enviar mensagem ao Teams via pymsteams
+    # 2. Enviar mensagem ao Teams
     send_to_teams = PythonOperator(
         task_id="send_to_teams",
         python_callable=send_to_teams_func,
-        provide_context=True,
     )
 
     # Ordem de execução
