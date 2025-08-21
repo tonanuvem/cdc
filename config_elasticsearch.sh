@@ -6,6 +6,8 @@ until docker exec elasticsearch curl -s -u elastic:changeme http://localhost:920
   printf "."; sleep 5
 done
 
+echo ""
+
 # cria o pipeline
 docker exec elasticsearch curl -s -u elastic:changeme -X PUT "http://localhost:9200/_ingest/pipeline/add_indexed_at" \
   -H 'Content-Type: application/json' \
