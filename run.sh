@@ -11,7 +11,7 @@ while [ "$(docker logs cdc-connect-1 2>&1 | grep "Finished starting connectors a
   sleep 1
 done
 
-echo "Configurando Elasticsearch"
+echo "Configurando Elasticsearch para adicionar o campo indexed_at"
 sh config_elasticsearch.sh
 
 echo ""
