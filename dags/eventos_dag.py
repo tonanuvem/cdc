@@ -39,10 +39,10 @@ with DAG(
         topics=["postgresdb.public.products"],
         kafka_config_id="kafka_airflow_teams",   # conexão configurada no Airflow
         apply_function=lambda msg: msg.value().decode("utf-8"),  # transforma bytes em string
-        consumer_config={"auto.offset.reset": "earliest"},
         max_messages=1,
         poll_timeout=30,
     )
+
 
     # 2. Enviar mensagem ao Teams
     send_to_teams = PythonOperator(
