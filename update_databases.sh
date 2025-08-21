@@ -9,6 +9,11 @@ set -e
 CONTEINER_POSTGRES="cdc-postgresdb-1"
 CONTEINER_MYSQL="cdc-mysqldb-1"
 
+# Configuração das tabelas
+TABELA_PRODUTOS="products"
+TABELA_USUARIOS="users"
+DATABASE_MYSQL="usuarios"
+
 echo "🚀 Iniciando inserção de dados em lote para demonstração de relatórios..."
 
 # Cores para output
@@ -59,15 +64,24 @@ exec_postgres() {
 
 # Função para executar SQL no MySQL
 exec_mysql() {
-    docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin usuarios -e "$1"
+    docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin $DATABASE_MYSQL -e "$1"
 }
 
 # Verificar dados existentes
 check_existing_data() {
     log "Verificando dados existentes..."
     
-    EXISTING_PRODUCTS=$(docker exec -i $CONTEINER_POSTGRES psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM produtos;" | tr -d ' ')
-    EXISTING_USERS=$(docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin usuarios -N -e "SELECT COUNT(*) FROM usuarios;" | tr -d ' ')
+    EXISTING_PRODUCTS=$(docker exec -i $CONTEINER_POSTGRES psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM $TABELA_PRODUTOS;" | tr -d ' ' | head -n 1)
+    EXISTING_USERS=$(docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin $DATABASE_MYSQL -N -e "SELECT COUNT(*) FROM $TABELA_USUARIOS;" 2>/dev/null | tr -d ' ' | head -n 1)
+    
+    # Verificar se os valores são números válidos
+    if ! [[ "$EXISTING_PRODUCTS" =~ ^[0-9]+$ ]]; then
+        EXISTING_PRODUCTS=0
+    fi
+    
+    if ! [[ "$EXISTING_USERS" =~ ^[0-9]+$ ]]; then
+        EXISTING_USERS=0
+    fi
     
     info "Produtos existentes: $EXISTING_PRODUCTS"
     info "Usuários existentes: $EXISTING_USERS"
@@ -82,7 +96,7 @@ add_17_products() {
     log "Adicionando 17 novos produtos..."
     
     exec_postgres "
-    INSERT INTO produtos (name_description, price, quantity, status, created_at) VALUES 
+    INSERT INTO $TABELA_PRODUTOS (name_description, price, quantity, status, created_at) VALUES 
     ('Camiseta básica branca', 35.90, 25, 'in_stock', NOW() - INTERVAL '60 days'),
     ('Calça jeans slim azul', 89.90, 12, 'in_stock', NOW() - INTERVAL '58 days'),
     ('Tênis casual branco', 199.00, 8, 'in_stock', NOW() - INTERVAL '56 days'),
@@ -110,7 +124,7 @@ add_17_users() {
     log "Adicionando 17 novos usuários..."
     
     exec_mysql "
-    INSERT INTO usuarios (full_name, address, created_at) VALUES 
+    INSERT INTO $TABELA_USUARIOS (full_name, address, created_at) VALUES 
     ('Bruce Banner', 'Stark Labs Building', DATE_SUB(NOW(), INTERVAL 60 DAY)),
     ('Natasha Romanoff', 'SHIELD Headquarters', DATE_SUB(NOW(), INTERVAL 58 DAY)),
     ('Steve Rogers', 'Brooklyn Heights', DATE_SUB(NOW(), INTERVAL 56 DAY)),
@@ -138,7 +152,7 @@ simulate_product_updates() {
     log "Simulando ~20 alterações por produto ao longo do tempo..."
     
     # Get all product IDs
-    PRODUCT_IDS=$(docker exec -i $CONTEINER_POSTGRES psql -U postgres -d postgres -t -c "SELECT id FROM produtos ORDER BY id;" | tr -d ' ')
+    PRODUCT_IDS=$(docker exec -i $CONTEINER_POSTGRES psql -U postgres -d postgres -t -c "SELECT id FROM $TABELA_PRODUTOS ORDER BY id;" | tr -d ' ')
     
     for product_id in $PRODUCT_IDS; do
         if [ -z "$product_id" ]; then
@@ -171,7 +185,7 @@ simulate_product_updates() {
             fi
             
             exec_postgres "
-            UPDATE produtos SET 
+            UPDATE $TABELA_PRODUTOS SET 
                 price = ROUND((price * $PRICE_VARIATION / 100)::numeric, 2),
                 quantity = $QTY_VARIATION,
                 status = $STATUS,
@@ -198,7 +212,7 @@ simulate_user_updates() {
     declare -a CITIES=("NYC" "LA" "Chicago" "Miami" "Boston" "Seattle" "Denver")
     
     # Get all user IDs
-    USER_IDS=$(docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin usuarios -N -e "SELECT id FROM usuarios ORDER BY id;" | tr -d ' ')
+    USER_IDS=$(docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin $DATABASE_MYSQL -N -e "SELECT id FROM $TABELA_USUARIOS ORDER BY id;" 2>/dev/null | tr -d ' ')
     
     for user_id in $USER_IDS; do
         if [ -z "$user_id" ]; then
@@ -208,7 +222,7 @@ simulate_user_updates() {
         info "Criando histórico para usuário ID: $user_id"
         
         # Get current user data
-        CURRENT_USER=$(docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin usuarios -N -e "SELECT full_name FROM usuarios WHERE id = $user_id;")
+        CURRENT_USER=$(docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin $DATABASE_MYSQL -N -e "SELECT full_name FROM $TABELA_USUARIOS WHERE id = $user_id;" 2>/dev/null)
         BASE_NAME=$(echo "$CURRENT_USER" | sed 's/Dr\.\|Prof\.\|Sr\.\|Sra\.\|Mr\.\|Ms\.\|Jr\.\|Sr\.\|II\|III\|PhD\|MD//g' | xargs)
         
         # 20 alterações por usuário
@@ -241,7 +255,7 @@ simulate_user_updates() {
             fi
             
             exec_mysql "
-            UPDATE usuarios SET 
+            UPDATE $TABELA_USUARIOS SET 
                 full_name = '$NEW_NAME',
                 address = '$NEW_ADDRESS',
                 updated_at = DATE_SUB(NOW(), INTERVAL $DAYS_AGO DAY)
@@ -263,7 +277,7 @@ create_analysis_patterns() {
     # Produto sazonal: aumentar preços de alguns produtos específicos
     info "🌞 Criando padrão sazonal - produtos de verão"
     exec_postgres "
-    UPDATE produtos SET 
+    UPDATE $TABELA_PRODUTOS SET 
         price = price * 1.25,
         updated_at = NOW() - INTERVAL '5 days'
     WHERE name_description LIKE '%shorts%' 
@@ -274,17 +288,17 @@ create_analysis_patterns() {
     # Black Friday: grandes descontos
     info "🛍️ Criando padrão Black Friday - descontos massivos"
     exec_postgres "
-    UPDATE produtos SET 
+    UPDATE $TABELA_PRODUTOS SET 
         price = price * 0.60,
         quantity = quantity + 20,
         updated_at = NOW() - INTERVAL '10 days'
-    WHERE id IN (SELECT id FROM produtos ORDER BY RANDOM() LIMIT 8);
+    WHERE id IN (SELECT id FROM $TABELA_PRODUTOS ORDER BY RANDOM() LIMIT 8);
     "
     
     # Fim de estoque gradual
     info "📉 Criando padrão de fim de estoque"
     exec_postgres "
-    UPDATE produtos SET 
+    UPDATE $TABELA_PRODUTOS SET 
         quantity = CASE 
             WHEN quantity > 10 THEN 2
             WHEN quantity > 5 THEN 1
@@ -296,13 +310,13 @@ create_analysis_patterns() {
             ELSE 'out_of_stock'
         END,
         updated_at = NOW() - INTERVAL '2 days'
-    WHERE id IN (SELECT id FROM produtos ORDER BY RANDOM() LIMIT 5);
+    WHERE id IN (SELECT id FROM $TABELA_PRODUTOS ORDER BY RANDOM() LIMIT 5);
     "
     
     # Reajustes inflacionários
     info "📈 Criando padrão inflacionário"
     exec_postgres "
-    UPDATE produtos SET 
+    UPDATE $TABELA_PRODUTOS SET 
         price = price * 1.15,
         updated_at = NOW() - INTERVAL '1 day'
     WHERE price < 100;
@@ -311,15 +325,15 @@ create_analysis_patterns() {
     # Mudanças de usuários mais realistas
     info "👥 Criando mudanças realistas de usuários"
     exec_mysql "
-    UPDATE usuarios SET 
+    UPDATE $TABELA_USUARIOS SET 
         full_name = CONCAT('Dr. ', full_name),
         address = CONCAT(address, ' - Medical District')
-    WHERE id IN (SELECT id FROM (SELECT id FROM usuarios ORDER BY RAND() LIMIT 3) tmp);
+    WHERE id IN (SELECT id FROM (SELECT id FROM $TABELA_USUARIOS ORDER BY RAND() LIMIT 3) tmp);
     
-    UPDATE usuarios SET 
+    UPDATE $TABELA_USUARIOS SET 
         full_name = CONCAT(full_name, ' Jr.'),
         address = CONCAT(address, ' - Residential Area')
-    WHERE id IN (SELECT id FROM (SELECT id FROM usuarios ORDER BY RAND() LIMIT 4) tmp);
+    WHERE id IN (SELECT id FROM (SELECT id FROM $TABELA_USUARIOS ORDER BY RAND() LIMIT 4) tmp);
     "
     
     log "✅ Padrões de análise criados"
@@ -339,7 +353,7 @@ show_final_statistics() {
         COUNT(CASE WHEN status = 'in_stock' THEN 1 END) as em_estoque,
         COUNT(CASE WHEN status = 'low_stock' THEN 1 END) as estoque_baixo,
         COUNT(CASE WHEN status = 'out_of_stock' THEN 1 END) as sem_estoque
-    FROM produtos;
+    FROM $TABELA_PRODUTOS;
     "
     
     echo ""
@@ -350,7 +364,7 @@ show_final_statistics() {
         ROUND(MAX(price), 2) as preco_maximo,
         ROUND(AVG(price), 2) as preco_medio,
         ROUND(STDDEV(price), 2) as desvio_padrao
-    FROM produtos;
+    FROM $TABELA_PRODUTOS;
     "
     
     echo ""
@@ -361,14 +375,14 @@ show_final_statistics() {
         COUNT(DISTINCT SUBSTRING_INDEX(full_name, ' ', 1)) as primeiros_nomes_unicos,
         AVG(CHAR_LENGTH(full_name)) as tamanho_medio_nome,
         AVG(CHAR_LENGTH(address)) as tamanho_medio_endereco
-    FROM usuarios;
+    FROM $TABELA_USUARIOS;
     "
     
     echo ""
     info "=== TOP 5 PRODUTOS MAIS CAROS ==="
     exec_postgres "
     SELECT name_description, price, quantity, status 
-    FROM produtos 
+    FROM $TABELA_PRODUTOS 
     ORDER BY price DESC 
     LIMIT 5;
     "
@@ -377,7 +391,7 @@ show_final_statistics() {
     info "=== TOP 5 PRODUTOS COM MAIOR ESTOQUE ==="
     exec_postgres "
     SELECT name_description, quantity, price, status 
-    FROM produtos 
+    FROM $TABELA_PRODUTOS 
     ORDER BY quantity DESC 
     LIMIT 5;
     "
@@ -386,7 +400,7 @@ show_final_statistics() {
     info "=== DISTRIBUIÇÃO POR STATUS ==="
     exec_postgres "
     SELECT status, COUNT(*) as quantidade
-    FROM produtos 
+    FROM $TABELA_PRODUTOS 
     GROUP BY status;
     "
     
