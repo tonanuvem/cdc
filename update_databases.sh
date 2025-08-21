@@ -5,6 +5,10 @@
 
 set -e
 
+# Configuração dos contêineres
+CONTEINER_POSTGRES="cdc-postgresdb-1"
+CONTEINER_MYSQL="cdc-mysqldb-1"
+
 echo "🚀 Iniciando inserção de dados em lote para demonstração de relatórios..."
 
 # Cores para output
@@ -35,13 +39,13 @@ info() {
 check_containers() {
     log "Verificando se os containers estão rodando..."
     
-    if ! docker ps | grep -q postgresdb; then
-        error "Container postgresdb não está rodando!"
+    if ! docker ps | grep -q $CONTEINER_POSTGRES; then
+        error "Container $CONTEINER_POSTGRES não está rodando!"
         exit 1
     fi
     
-    if ! docker ps | grep -q mysqldb; then
-        error "Container mysqldb não está rodando!"
+    if ! docker ps | grep -q $CONTEINER_MYSQL; then
+        error "Container $CONTEINER_MYSQL não está rodando!"
         exit 1
     fi
     
@@ -50,20 +54,20 @@ check_containers() {
 
 # Função para executar SQL no PostgreSQL
 exec_postgres() {
-    docker exec -i postgresdb psql -U postgres -d postgres -c "$1"
+    docker exec -i $CONTEINER_POSTGRES psql -U postgres -d postgres -c "$1"
 }
 
 # Função para executar SQL no MySQL
 exec_mysql() {
-    docker exec -i mysqldb mysql -u admin -padmin usuarios -e "$1"
+    docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin usuarios -e "$1"
 }
 
 # Verificar dados existentes
 check_existing_data() {
     log "Verificando dados existentes..."
     
-    EXISTING_PRODUCTS=$(docker exec -i postgresdb psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM produtos;" | tr -d ' ')
-    EXISTING_USERS=$(docker exec -i mysqldb mysql -u admin -padmin usuarios -N -e "SELECT COUNT(*) FROM usuarios;" | tr -d ' ')
+    EXISTING_PRODUCTS=$(docker exec -i $CONTEINER_POSTGRES psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM produtos;" | tr -d ' ')
+    EXISTING_USERS=$(docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin usuarios -N -e "SELECT COUNT(*) FROM usuarios;" | tr -d ' ')
     
     info "Produtos existentes: $EXISTING_PRODUCTS"
     info "Usuários existentes: $EXISTING_USERS"
@@ -134,7 +138,7 @@ simulate_product_updates() {
     log "Simulando ~20 alterações por produto ao longo do tempo..."
     
     # Get all product IDs
-    PRODUCT_IDS=$(docker exec -i postgresdb psql -U postgres -d postgres -t -c "SELECT id FROM produtos ORDER BY id;" | tr -d ' ')
+    PRODUCT_IDS=$(docker exec -i $CONTEINER_POSTGRES psql -U postgres -d postgres -t -c "SELECT id FROM produtos ORDER BY id;" | tr -d ' ')
     
     for product_id in $PRODUCT_IDS; do
         if [ -z "$product_id" ]; then
@@ -194,7 +198,7 @@ simulate_user_updates() {
     declare -a CITIES=("NYC" "LA" "Chicago" "Miami" "Boston" "Seattle" "Denver")
     
     # Get all user IDs
-    USER_IDS=$(docker exec -i mysqldb mysql -u admin -padmin usuarios -N -e "SELECT id FROM usuarios ORDER BY id;" | tr -d ' ')
+    USER_IDS=$(docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin usuarios -N -e "SELECT id FROM usuarios ORDER BY id;" | tr -d ' ')
     
     for user_id in $USER_IDS; do
         if [ -z "$user_id" ]; then
@@ -204,7 +208,7 @@ simulate_user_updates() {
         info "Criando histórico para usuário ID: $user_id"
         
         # Get current user data
-        CURRENT_USER=$(docker exec -i mysqldb mysql -u admin -padmin usuarios -N -e "SELECT full_name FROM usuarios WHERE id = $user_id;")
+        CURRENT_USER=$(docker exec -i $CONTEINER_MYSQL mysql -u admin -padmin usuarios -N -e "SELECT full_name FROM usuarios WHERE id = $user_id;")
         BASE_NAME=$(echo "$CURRENT_USER" | sed 's/Dr\.\|Prof\.\|Sr\.\|Sra\.\|Mr\.\|Ms\.\|Jr\.\|Sr\.\|II\|III\|PhD\|MD//g' | xargs)
         
         # 20 alterações por usuário
