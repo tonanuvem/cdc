@@ -1,10 +1,22 @@
 from __future__ import annotations
 
 import pendulum
+import pymsteams
 
 from airflow.models.dag import DAG
-from airflow.providers.http.operators.http import SimpleHttpOperator
+from airflow.operators.python import PythonOperator
 from airflow.providers.kafka.operators.kafka import KafkaConsumerOperator
+
+# Função para enviar mensagem ao Microsoft Teams
+def send_to_teams_func(**context):
+    kafka_msg = context['ti'].xcom_pull(task_ids="read_kafka_events", key="return_value")
+
+    # 🔁 Insira aqui seu webhook do Teams
+    webhook_url = "https://outlook.office.com/webhook/..."  # <- Substitua por seu Webhook real
+
+    teams_message = pymsteams.connectorcard(webhook_url)
+    teams_message.text(f"📢 Novo evento Kafka no tópico `postgresdb.public.products`:\n\n{str(kafka_msg)}")
+    teams_message.send()
 
 with DAG(
     dag_id="kafka_to_teams_notifications",
@@ -14,29 +26,22 @@ with DAG(
     tags=["kafka", "teams", "cdc"],
 ) as dag:
     
-    # 1. Tarefa para ler eventos do Kafka
-    # Usamos o KafkaConsumerOperator para ler eventos do tópico
-    # O parametro "apply_async" armazena o resultado no XComs
+    # 1. Ler mensagem do Kafka
     read_kafka_events = KafkaConsumerOperator(
         task_id="read_kafka_events",
-        topics=["postgresdb.public.products"],  # Nome do seu tópico. Se for 'cdc_server.public.produtos', use esse.
-        kafka_conn_id="kafka_airflow_teams",  # Usa a conexão que você já configurou
-        consumer_timeout=30.0, # Timeout para o consumidor
-        max_messages=1, # Lê apenas 1 mensagem por execução
-        apply_async=True # Salva o resultado no XComs
+        topics=["postgresdb.public.products"],
+        kafka_conn_id="kafka_airflow_teams",
+        consumer_timeout=30.0,
+        max_messages=1,
+        apply_async=True
     )
 
-    # 2. Tarefa para enviar a mensagem para o Teams
-    # A mensagem é um string que acessa o resultado da tarefa anterior via XComs
-    send_to_teams = SimpleHttpOperator(
+    # 2. Enviar mensagem ao Teams via pymsteams
+    send_to_teams = PythonOperator(
         task_id="send_to_teams",
-        http_conn_id="teams_webhook_conn", # Usa a conexão do Teams que você criou
-        endpoint="", # O endpoint já estará configurado do AirFlow
-        method="POST",
-        headers={"Content-type": "application/json"},
-        data='{{ {"text": "Novo evento CDC topico postgresdb.public.products do Kafka: " + task_instance.xcom_pull(task_ids="read_kafka_events", key="return_value") | string | replace("\\"", "") } }}',
-        log_response=True,
+        python_callable=send_to_teams_func,
+        provide_context=True,
     )
 
-    # Definir a ordem de execução das tarefas
+    # Ordem de execução
     read_kafka_events >> send_to_teams
