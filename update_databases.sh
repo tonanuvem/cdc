@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script gerado com Claude.ia para inserção de dados em lote para demonstração dos relatórios
+# Script para inserção de dados em lote para demonstração dos relatórios
 # Adiciona 17 produtos + 17 usuários e faz ~20 alterações em cada um
 
 set -e
@@ -62,13 +62,13 @@ exec_mysql() {
 check_existing_data() {
     log "Verificando dados existentes..."
     
-    EXISTING_PRODUCTS=$(docker exec -i postgresdb psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM produtos;")
-    EXISTING_USERS=$(docker exec -i mysqldb mysql -u admin -padmin usuarios -N -e "SELECT COUNT(*) FROM usuarios;")
+    EXISTING_PRODUCTS=$(docker exec -i postgresdb psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM produtos;" | tr -d ' ')
+    EXISTING_USERS=$(docker exec -i mysqldb mysql -u admin -padmin usuarios -N -e "SELECT COUNT(*) FROM usuarios;" | tr -d ' ')
     
-    info "Produtos existentes: ${EXISTING_PRODUCTS// /}"
-    info "Usuários existentes: ${EXISTING_USERS// /}"
+    info "Produtos existentes: $EXISTING_PRODUCTS"
+    info "Usuários existentes: $EXISTING_USERS"
     
-    if [[ ${EXISTING_PRODUCTS// /} -lt 3 ]] || [[ ${EXISTING_USERS// /} -lt 3 ]]; then
+    if [ "$EXISTING_PRODUCTS" -lt 3 ] || [ "$EXISTING_USERS" -lt 3 ]; then
         warn "Menos de 3 produtos/usuários existentes. Continuando mesmo assim..."
     fi
 }
@@ -134,10 +134,13 @@ simulate_product_updates() {
     log "Simulando ~20 alterações por produto ao longo do tempo..."
     
     # Get all product IDs
-    PRODUCT_IDS=$(docker exec -i postgresdb psql -U postgres -d postgres -t -c "SELECT id FROM produtos ORDER BY id;")
+    PRODUCT_IDS=$(docker exec -i postgresdb psql -U postgres -d postgres -t -c "SELECT id FROM produtos ORDER BY id;" | tr -d ' ')
     
     for product_id in $PRODUCT_IDS; do
-        product_id=$(echo $product_id | tr -d ' ')
+        if [ -z "$product_id" ]; then
+            continue
+        fi
+        
         info "Criando histórico para produto ID: $product_id"
         
         # 20 alterações por produto distribuídas em 60 dias
@@ -149,9 +152,9 @@ simulate_product_updates() {
             QTY_VARIATION=$(shuf -i 1-50 -n 1)
             
             # Status baseado na quantidade
-            if [ $QTY_VARIATION -le 3 ]; then
+            if [ "$QTY_VARIATION" -le 3 ]; then
                 STATUS="'low_stock'"
-            elif [ $QTY_VARIATION -eq 0 ]; then
+            elif [ "$QTY_VARIATION" -eq 0 ]; then
                 STATUS="'out_of_stock'"
             else
                 STATUS="'in_stock'"
@@ -159,7 +162,7 @@ simulate_product_updates() {
             
             # Dias atrás para esta alteração
             DAYS_AGO=$((60 - i * 3))
-            if [ $DAYS_AGO -lt 0 ]; then
+            if [ "$DAYS_AGO" -lt 0 ]; then
                 DAYS_AGO=0
             fi
             
@@ -191,15 +194,18 @@ simulate_user_updates() {
     declare -a CITIES=("NYC" "LA" "Chicago" "Miami" "Boston" "Seattle" "Denver")
     
     # Get all user IDs
-    USER_IDS=$(docker exec -i mysqldb mysql -u admin -padmin usuarios -N -e "SELECT id FROM usuarios ORDER BY id;")
+    USER_IDS=$(docker exec -i mysqldb mysql -u admin -padmin usuarios -N -e "SELECT id FROM usuarios ORDER BY id;" | tr -d ' ')
     
     for user_id in $USER_IDS; do
-        user_id=$(echo $user_id | tr -d ' ')
+        if [ -z "$user_id" ]; then
+            continue
+        fi
+        
         info "Criando histórico para usuário ID: $user_id"
         
         # Get current user data
         CURRENT_USER=$(docker exec -i mysqldb mysql -u admin -padmin usuarios -N -e "SELECT full_name FROM usuarios WHERE id = $user_id;")
-        BASE_NAME=$(echo $CURRENT_USER | sed 's/Dr\.\|Prof\.\|Sr\.\|Sra\.\|Mr\.\|Ms\.\|Jr\.\|Sr\.\|II\|III\|PhD\|MD//g' | xargs)
+        BASE_NAME=$(echo "$CURRENT_USER" | sed 's/Dr\.\|Prof\.\|Sr\.\|Sra\.\|Mr\.\|Ms\.\|Jr\.\|Sr\.\|II\|III\|PhD\|MD//g' | xargs)
         
         # 20 alterações por usuário
         for i in {1..20}; do
@@ -207,11 +213,11 @@ simulate_user_updates() {
             PREFIX=${NAME_PREFIXES[$RANDOM % ${#NAME_PREFIXES[@]}]}
             SUFFIX=${NAME_SUFFIXES[$RANDOM % ${#NAME_SUFFIXES[@]}]}
             
-            if [[ $i % 5 -eq 0 && ! -z "$PREFIX" ]]; then
+            if [ $((i % 5)) -eq 0 ] && [ -n "$PREFIX" ]; then
                 NEW_NAME="$PREFIX $BASE_NAME"
-            elif [[ $i % 7 -eq 0 && ! -z "$SUFFIX" ]]; then
+            elif [ $((i % 7)) -eq 0 ] && [ -n "$SUFFIX" ]; then
                 NEW_NAME="$BASE_NAME $SUFFIX"
-            elif [[ $i % 10 -eq 0 && ! -z "$PREFIX" && ! -z "$SUFFIX" ]]; then
+            elif [ $((i % 10)) -eq 0 ] && [ -n "$PREFIX" ] && [ -n "$SUFFIX" ]; then
                 NEW_NAME="$PREFIX $BASE_NAME $SUFFIX"
             else
                 NEW_NAME="$BASE_NAME"
@@ -226,7 +232,7 @@ simulate_user_updates() {
             
             # Dias atrás para esta alteração
             DAYS_AGO=$((60 - i * 3))
-            if [ $DAYS_AGO -lt 0 ]; then
+            if [ "$DAYS_AGO" -lt 0 ]; then
                 DAYS_AGO=0
             fi
             
