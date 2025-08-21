@@ -1,0 +1,9 @@
+FROM apache/airflow:3.0.5
+
+USER root
+
+RUN pip install \
+    apache-airflow-providers-apache-kafka \
+    pymsteams
+
+USER airflow
