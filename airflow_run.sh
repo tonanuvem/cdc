@@ -36,12 +36,19 @@ TOKEN=$(docker logs cdc-jupyter-1 2>&1 | grep token | grep 127. | sed -n 's/.*?t
 echo ""
 
 echo "Configurando conector do Airflow com Kafka"
-docker exec -it cdc-airflow-scheduler-1 airflow connections add kafka_airflow_teams \
-    --conn-type kafka \
-    --conn-host kafka \
-    --conn-port 9092 \
-    --conn-extra '{"bootstrap.servers": "kafka:9092", "group.id": "TEAMS_FIAP_AIRFLOW", "security.protocol": "PLAINTEXT", "auto.offset.reset": "beginning"}' 2>/dev/null
-
+docker exec -it cdc-airflow-scheduler-1 bash -c \
+  "AIRFLOW__LOGGING__LOGGING_LEVEL=ERROR \
+   airflow connections add kafka_airflow_teams \
+     --conn-type kafka \
+     --conn-host kafka \
+     --conn-port 9092 \
+     --conn-description 'Conexão Kafka para integração com Teams - FIAP Airflow' \
+     --conn-extra '{
+       \"bootstrap.servers\": \"kafka:9092\",
+       \"group.id\": \"TEAMS_FIAP_AIRFLOW\",
+       \"security.protocol\": \"PLAINTEXT\",
+       \"auto.offset.reset\": \"beginning\"
+     }'"    
 echo "Conector do Airflow com Kafka : Pronto."
 
 IP=$(curl -s checkip.amazonaws.com)
