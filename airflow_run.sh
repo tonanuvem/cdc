@@ -33,6 +33,12 @@ echo "Token Pronto."
 TOKEN=$(docker logs cdc-jupyter-1 2>&1 | grep token | grep 127. | sed -n 's/.*?token=\([a-f0-9]*\).*/\1/p' | uniq)
 echo ""
 
+echo "Configurando conector do Airflow com Kafka"
+docker exec -it cdc-airflow-scheduler-1 airflow connections add kafka_airflow_teams \
+    --conn-type kafka \
+    --conn-host kafka \
+    --conn-port 9092 \
+    --conn-extra '{"group.id": "kafka_airflow_teams", "security.protocol": "PLAINTEXT", "auto.offset.reset": "beginning"}' 2>/dev/null
 
 IP=$(curl -s checkip.amazonaws.com)
 echo ""
