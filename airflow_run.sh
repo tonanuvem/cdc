@@ -40,7 +40,9 @@ docker exec -it cdc-airflow-scheduler-1 airflow connections add kafka_airflow_te
     --conn-type kafka \
     --conn-host kafka \
     --conn-port 9092 \
-    --conn-extra '{"bootstrap.servers": "kafka:9092", "group.id": "TEAMS_FIAP_AIRFLOW, "security.protocol": "PLAINTEXT", "auto.offset.reset": "beginning"}' 2>/dev/null
+    --conn-extra '{"bootstrap.servers": "kafka:9092", "group.id": "TEAMS_FIAP_AIRFLOW", "security.protocol": "PLAINTEXT", "auto.offset.reset": "beginning"}' 2>/dev/null
+
+echo "Conector do Airflow com Kafka : Pronto."
 
 IP=$(curl -s checkip.amazonaws.com)
 echo ""
