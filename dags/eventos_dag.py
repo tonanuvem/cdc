@@ -1,3 +1,5 @@
+### CONFIGURAR A LINHA 27:      webhook_url = "INSERIR_WEBHOOK"
+
 from __future__ import annotations
 
 import pendulum
@@ -15,6 +17,12 @@ def send_to_teams_func(**context):
         key="return_value"
     )
 
+    if not kafka_msg:
+        context['ti'].log.info("Nenhuma mensagem Kafka recebida, nada será enviado ao Teams.")
+        return
+
+    context['ti'].log.info(f"Mensagem Kafka recebida: {kafka_msg}")
+
     # 🔁 Insira aqui o webhook do Teams
     webhook_url = "INSERIR_WEBHOOK"
 
@@ -23,6 +31,7 @@ def send_to_teams_func(**context):
         f"📢 Novo evento Kafka no tópico `postgresdb.public.products`:\n\n{str(kafka_msg)}"
     )
     teams_message.send()
+    context['ti'].log.info("Mensagem enviada ao Teams com sucesso.")
 
 
 with DAG(
