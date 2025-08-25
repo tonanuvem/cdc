@@ -1,4 +1,4 @@
-### CONFIGURAR A LINHA 27:      webhook_url = "INSERIR_WEBHOOK"
+### CONFIGURAR A LINHA 31:      webhook_url = "INSERIR_WEBHOOK"
 
 from __future__ import annotations
 
@@ -8,7 +8,11 @@ import pymsteams
 from airflow.models.dag import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.apache.kafka.operators.consume import ConsumeFromTopicOperator
+from airflow.utils.log.logging_mixin import LoggingMixin
 
+
+# Logger do Airflow
+log = LoggingMixin().log
 
 # 🔔 Função para enviar mensagem ao Microsoft Teams
 def send_to_teams_func(**context):
@@ -18,10 +22,10 @@ def send_to_teams_func(**context):
     )
 
     if not kafka_msg:
-        context['ti'].log.info("Nenhuma mensagem Kafka recebida, nada será enviado ao Teams.")
+        log.info("Nenhuma mensagem Kafka recebida, nada será enviado ao Teams.")
         return
 
-    context['ti'].log.info(f"Mensagem Kafka recebida: {kafka_msg}")
+    log.info(f"Mensagem Kafka recebida: {kafka_msg}")
 
     # 🔁 Insira aqui o webhook do Teams
     webhook_url = "INSERIR_WEBHOOK"
@@ -31,7 +35,7 @@ def send_to_teams_func(**context):
         f"📢 Novo evento Kafka no tópico `postgresdb.public.products`:\n\n{str(kafka_msg)}"
     )
     teams_message.send()
-    context['ti'].log.info("Mensagem enviada ao Teams com sucesso.")
+    log.info("Mensagem enviada ao Teams com sucesso.")
 
 
 with DAG(
