@@ -1,33 +1,33 @@
 #!/bin/bash
 
-# Nome do container definido no docker-compose
-CONTAINER_NAME="cloudbeaver"
+# Aguardar CloudBeaver iniciar
+echo "Aguardando CloudBeaver inicializar..."
+sleep 15
 
-echo "🚀 Configurando CloudBeaver..."
+# Fazer login como admin
+SESSION=$(curl -s -X POST http://localhost:8978/api/gql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"mutation { authLogin(provider: \"local\", credentials: {user: \"admin\", password: \"admin\"}) { authId } }"}' | jq -r '.data.authLogin.authId')
 
-sudo chmod -R 777 ./cloudbeaver  # Permissao
+echo "Session ID: $SESSION"
 
-echo "⏳ Aguardando a inicialização do serviço (isso pode levar alguns segundos)..."
-IP=$(curl -s checkip.amazonaws.com)
+# Criar conexão PostgreSQL
+curl -s -X POST http://localhost:8978/api/gql \
+  -H "Content-Type: application/json" \
+  -H "Cookie: cb-session-id=$SESSION" \
+  -d '{
+    "query": "mutation { createConnection(config: {name: \"Postgres - Produtos\", driverId: \"postgresql:postgres-jdbc\", host: \"postgresdb\", port: \"5432\", databaseName: \"postgres\", credentials: {userName: \"postgres\", userPassword: \"admin\"}, saveCredentials: true}) { id } }"
+  }'
 
-# Loop de verificação de logs
-while true; do
-    # Verifica se a string "Started JettyServer" aparece nos logs
-    
-    if docker logs "$CONTAINER_NAME" 2>&1 | grep -q "Started JettyServer"; then
-        echo -e "\n✅ CloudBeaver subiu com sucesso!"
-        echo "🌐 Acesse em: http://$IP:8978"
-        break
-    fi
+echo ""
 
-    # Verifica se o container morreu por erro
-    STATUS=$(docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null)
-    if [ "$STATUS" != "true" ]; then
-        echo -e "\n❌ Erro: O container $CONTAINER_NAME parou de rodar."
-        docker logs "$CONTAINER_NAME" --tail 20
-        exit 1
-    fi
+# Criar conexão MySQL
+curl -s -X POST http://localhost:8978/api/gql \
+  -H "Content-Type: application/json" \
+  -H "Cookie: cb-session-id=$SESSION" \
+  -d '{
+    "query": "mutation { createConnection(config: {name: \"MySQL - Usuários\", driverId: \"mysql:mysql8\", host: \"mysqldb\", port: \"3306\", databaseName: \"usuarios\", credentials: {userName: \"admin\", userPassword: \"admin\"}, saveCredentials: true}) { id } }"
+  }'
 
-    echo -n "."
-    sleep 2
-done
+echo ""
+echo "Conexões criadas!"
