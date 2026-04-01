@@ -189,7 +189,7 @@ services:
       - CB_SERVER_NAME=CloudBeaver CDC
       - CB_SERVER_URL=http://localhost:8978
       - CB_ADMIN_NAME=admin
-      - CB_ADMIN_PASSWORD=admin
+      - CB_ADMIN_PASSWORD=Fiap@12345
       # DB externo
       - CLOUDBEAVER_DB_DRIVER=postgres-jdbc
       - CLOUDBEAVER_DB_URL=jdbc:postgresql://cloudbeaver-postgres:5432/cloudbeaver
