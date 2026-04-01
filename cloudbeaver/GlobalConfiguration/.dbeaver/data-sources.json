@@ -6,6 +6,7 @@
       "driver": "postgres-jdbc",
       "name": "Postgres - Produtos",
       "save-password": true,
+      "shared": true,
       "show-system-objects": true,
       "configuration": {
         "host": "postgresdb",
@@ -29,6 +30,7 @@
       "driver": "mysql8",
       "name": "MySQL - Usuários",
       "save-password": true,
+      "shared": true,
       "show-system-objects": true,
       "configuration": {
         "host": "mysqldb",
@@ -49,6 +51,7 @@
       "driver": "elasticsearch",
       "name": "Elasticsearch - Logs/Busca",
       "save-password": true,
+      "shared": true,
       "configuration": {
         "host": "localhost",
         "port": "9200",
