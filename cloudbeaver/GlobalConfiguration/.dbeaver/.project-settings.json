@@ -1,0 +1,6 @@
+{
+    "global": {
+        "defaultUserRole": "admin",
+        "anonymousAccessEnabled": true
+    }
+}
