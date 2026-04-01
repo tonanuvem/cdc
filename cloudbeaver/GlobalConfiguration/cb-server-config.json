@@ -1,0 +1,10 @@
+{
+  "serverName": "CloudBeaver CDC",
+  "serverURL": "http://localhost:8978",
+  "adminName": "admin",
+  "adminPassword": "admin",
+  "anonymousAccessEnabled": true,
+  "authenticationEnabled": true,
+  "customConnectionsEnabled": true,
+  "configurationMode": false
+}
