@@ -1,0 +1,66 @@
+{
+  "folders": {},
+  "connections": {
+    "postgres-produtos-conn": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "Postgres - Produtos",
+      "save-password": true,
+      "show-system-objects": true,
+      "configuration": {
+        "host": "postgresdb",
+        "port": "5432",
+        "database": "postgres",
+        "url": "jdbc:postgresql://postgresdb:5432/postgres",
+        "configurationType": "MANUAL",
+        "type": "dev",
+        "authModel": "native",
+        "bootstrap": {
+          "defaultSchema": "public"
+        }
+      },
+      "auth-properties": {
+        "user": "postgres",
+        "password": "admin"
+      }
+    },
+    "mysql-usuarios-conn": {
+      "provider": "mysql",
+      "driver": "mysql8",
+      "name": "MySQL - Usuários",
+      "save-password": true,
+      "show-system-objects": true,
+      "configuration": {
+        "host": "mysqldb",
+        "port": "3306",
+        "database": "usuarios",
+        "url": "jdbc:mysql://mysqldb:3306/usuarios",
+        "configurationType": "MANUAL",
+        "type": "dev",
+        "authModel": "native"
+      },
+      "auth-properties": {
+        "user": "admin",
+        "password": "admin"
+      }
+    },
+    "elasticsearch-conn": {
+      "provider": "elasticsearch",
+      "driver": "elasticsearch",
+      "name": "Elasticsearch - Logs/Busca",
+      "save-password": true,
+      "configuration": {
+        "host": "localhost",
+        "port": "9200",
+        "url": "jdbc:elasticsearch://localhost:9200",
+        "configurationType": "MANUAL",
+        "type": "dev",
+        "authModel": "native"
+      },
+      "auth-properties": {
+        "user": "elastic",
+        "password": "changeme"
+      }
+    }
+  }
+}
