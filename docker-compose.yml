@@ -173,8 +173,49 @@ services:
     depends_on:
       - elasticsearch
 
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:26
+    container_name: cloudbeaver
+    ports:
+      - 8978:8978
+    volumes:
+      - ./cloudbeaver:/opt/cloudbeaver/workspace
+      - cloudbeaver_certs:/opt/cloudbeaver/conf/certificates/
+      - trusted_cacerts:/opt/cloudbeaver/workspace/.data/custom/
+      - api_tokens:/opt/cloudbeaver/conf/keys/
+    environment:
+      - CLOUDBEAVER_DB_DRIVER=postgres-jdbc
+      - CLOUDBEAVER_DB_URL=jdbc:postgresql://cloudbeaver-postgres:5432/cloudbeaver
+      - CLOUDBEAVER_DB_USER=postgres
+      - CLOUDBEAVER_DB_PASSWORD=admin
+      - CLOUDBEAVER_DB_SCHEMA=cb
+      - CLOUDBEAVER_QM_DB_DRIVER=postgres-jdbc
+      - CLOUDBEAVER_QM_DB_URL=jdbc:postgresql://cloudbeaver-postgres:5432/cloudbeaver
+      - CLOUDBEAVER_QM_DB_USER=postgres
+      - CLOUDBEAVER_QM_DB_PASSWORD=admin
+      - CLOUDBEAVER_QM_DB_SCHEMA=qm
+      - CLOUDBEAVER_DMSVC_URL=http://127.0.0.1:11000
+    depends_on:
+      - mysqldb
+
+  cloudbeaver-postgres:
+    image: dbeaver/cloudbeaver-postgres:16
+    volumes:
+      - cloudbeaver-postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=cloudbeaver
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+    expose:
+      - 5432
+      
 volumes:
   pgadmindata:
   postgresdata:
   mysqldata:
   esdata:
+  cloudbeaver_certs: {}
+  postgres_data: {}
+  trusted_cacerts: {}
+  api_tokens: {}
+  cloudbeaver-postgres_data:
