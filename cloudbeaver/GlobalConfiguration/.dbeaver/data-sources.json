@@ -5,6 +5,7 @@
 			"provider": "mysql",
 			"driver": "mysql8",
 			"name": "mysql-usuarios",
+			"save-password": true,
 			"navigator-show-only-entities": true,
 			"navigator-hide-folders": true,
 			"navigator-hide-virtual": true,
