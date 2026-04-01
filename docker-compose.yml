@@ -183,7 +183,14 @@ services:
       - cloudbeaver_certs:/opt/cloudbeaver/conf/certificates/
       - trusted_cacerts:/opt/cloudbeaver/workspace/.data/custom/
       - api_tokens:/opt/cloudbeaver/conf/keys/
+      - ./cloudbeaver/conf/cloudbeaver.conf:/opt/cloudbeaver/conf/cloudbeaver.conf  # ← montar conf
     environment:
+      # Configuração automática — pula o wizard
+      - CB_SERVER_NAME=CloudBeaver CDC
+      - CB_SERVER_URL=http://localhost:8978
+      - CB_ADMIN_NAME=admin
+      - CB_ADMIN_PASSWORD=admin
+      # DB externo
       - CLOUDBEAVER_DB_DRIVER=postgres-jdbc
       - CLOUDBEAVER_DB_URL=jdbc:postgresql://cloudbeaver-postgres:5432/cloudbeaver
       - CLOUDBEAVER_DB_USER=postgres
