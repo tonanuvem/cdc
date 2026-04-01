@@ -1,6 +1,7 @@
 # Liberando a porta no caso de rodar no Cloud9
 sudo service mysql stop
 chmod 755 postgres_init_database.sh
+sudo chmod -R 777 ./cloudbeaver  # Permissao
 
 docker-compose up -d
 
