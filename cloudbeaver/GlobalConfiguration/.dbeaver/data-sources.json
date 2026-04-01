@@ -52,7 +52,7 @@
       "configuration": {
         "host": "localhost",
         "port": "9200",
-        "url": "jdbc:elasticsearch://localhost:9200",
+        "url": "jdbc:elasticsearch://elasticsearch:9200",
         "configurationType": "MANUAL",
         "type": "dev",
         "authModel": "native"
