@@ -95,20 +95,20 @@ services:
       DYNAMIC_CONFIG_ENABLED: 'true'
 
   # PRODUTOS Microservice : exemplo Postgres
-  pgadmin:
-    #image: dpage/pgadmin4
-    image: tonanuvem/pgadmin:cdc
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "30080:80"
-    volumes:
-      - "pgadmindata:/var/lib/pgadmin"
-    #  - "./postgres_servers.json:/pgadmin4/servers.json"
-    restart: unless-stopped
-    depends_on: 
-      - postgresdb
+  # pgadmin:
+  #   #image: dpage/pgadmin4
+  #   image: tonanuvem/pgadmin:cdc
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #   ports:
+  #     - "30080:80"
+  #   volumes:
+  #     - "pgadmindata:/var/lib/pgadmin"
+  #   #  - "./postgres_servers.json:/pgadmin4/servers.json"
+  #   restart: unless-stopped
+  #   depends_on: 
+  #     - postgresdb
       
   postgresdb:
     #image: debezium/postgres:13-alpine
@@ -123,19 +123,19 @@ services:
       #- "./postgres_init_database.sh:/docker-entrypoint-initdb.d/init-database.sh"
 
   # USUARIOS Microservice : exemplo MySQL
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    environment:
-      PMA_HOST: mysqldb
-      PMA_PORT: 3306
-      PMA_ARBITRARY: 1
-      PMA_USER: admin
-      PMA_PASSWORD: admin
-    ports:
-      - 8082:80  
-    restart: unless-stopped
-    depends_on: 
-      - mysqldb
+  # phpmyadmin:
+  #   image: phpmyadmin/phpmyadmin
+  #   environment:
+  #     PMA_HOST: mysqldb
+  #     PMA_PORT: 3306
+  #     PMA_ARBITRARY: 1
+  #     PMA_USER: admin
+  #     PMA_PASSWORD: admin
+  #   ports:
+  #     - 8082:80  
+  #   restart: unless-stopped
+  #   depends_on: 
+  #     - mysqldb
     
   mysqldb:
     #image: mysql:5.7
