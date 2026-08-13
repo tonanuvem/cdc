@@ -33,5 +33,6 @@ echo " - DBeaver [MySQL UI + PostGres UI]     : http://$IP:8978 ( login = fiap /
 #echo " - MySQL UI                              : http://$IP:8082 ( login = admin / senha = admin )"
 echo ""
 echo " - NIFI                                  : http://$IP:8090/nifi"
+echo ""
 echo " - Kibana (Elastic search)               : http://$IP:5601"
 echo ""
